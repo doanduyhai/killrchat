@@ -1,0 +1,61 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+
+
+    <logger name="ACHILLES_DML_STATEMENT" level="DEBUG"/>
+
+    <logger name="ACHILLES_DDL_SCRIPT" level="DEBUG"/>
+
+    <logger name="com.datastax.demo.killrchat.entity.UserEntity" level="OFF"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- lots of warning for embedded Cassandra, shut them up -->
+    <logger name="org.apache.cassandra.cql3.QueryProcessor" level="OFF"/>
+    <logger name="com.datastax.driver.core.ControlConnection" level="OFF"/>
+    <logger name="org.apache.cassandra.db.Memtable" level="OFF"/>
+
+    <logger name="info.archinnov.achilles" level="INFO"/>
+
+    <root>
+        <level value="WARN" />
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

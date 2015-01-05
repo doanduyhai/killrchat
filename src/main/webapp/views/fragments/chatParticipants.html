@@ -1,0 +1,16 @@
+<p>Participants</p>
+<hr/>
+<ul class="nav nav-sidebar full-height">
+    <li ng-repeat="participant in state.currentRoom.participants">
+        <a title="Click here for details on '{{participant | displayUserName}}'"  class="clickable"
+           popover="<i class='participant-popup fa fa-spinner fa-spin'></i>"
+           popover-placement="left"
+           popover-append-to-body="true"
+           popover-trigger="click"
+           popover-title="{{participant | displayUserName}}"
+           participant-popup
+           participant="participant">
+            <i class="fa fa-user fa-lg pull-left"></i> {{participant | displayUserName}}
+        </a>
+    </li>
+</ul>

@@ -1,0 +1,34 @@
+<div class="panel panel-default" ng-controller="NewRoomCtrl">
+    <div class="panel-heading text-center"><h2>Create new room</h2></div>
+    <div class="panel-body">
+        <p class="bg-danger well well-sm" ng-if="room_form_error != null">
+            Error while creating room: {{room_form_error}}
+        </p>
+        <form class="form-horizontal" role="form" name="room_form">
+            <div class="form-group has-feedback" valid-for="room_form.name.$valid">
+                <label for="name" class="col-md-offset-1 col-md-2 control-label">Name</label>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Room name with pattern [a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}"
+                           ng-model="newRoom.roomName" required ng-pattern="/^[a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}$/">
+                    <br/>
+                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true"
+                          ng-show="!room_form.name.$valid"></span>
+                </div>
+            </div>
+            <div class="form-group has-feedback">
+                <label for="banner" class="col-md-offset-1 col-md-2 control-label">Banner</label>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="banner" name="banner" placeholder="Optional room banner" ng-model="newRoom.payload.banner">
+                    <br/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-offset-3 col-md-6 text-center">
+                    <button type="submit" class="btn btn-primary" ng-disabled="room_form.$invalid" ng-click="createNewRoom()">
+                        Create
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

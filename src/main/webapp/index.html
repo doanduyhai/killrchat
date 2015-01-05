@@ -1,0 +1,61 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>KillrChat</title>
+        <meta name="description" content="KillrChat Web Client">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link rel="icon" href="images/favicon.ico" />
+        <link rel="stylesheet" href="styles/bootstrap.css">
+        <link rel="stylesheet" media="all" type="text/css" href="styles/font-awesome.min.css">
+        <link rel="stylesheet/less" type="text/css" href="styles/main.less" />
+        <!-- endbuild -->
+    </head>
+    <body ng-app="KillrChat">
+        <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NavBarCtrl">
+            <div class="navbar-inner" >
+                <div class="container-fluid">
+                    <a class="navbar-brand">KillrChat</a>
+                    <ul class="nav navbar-nav">
+                        <li><a href="http://cassandra.apache.org/" target="_blank">powered by <strong>Apache Cassandra™</strong></a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right logout" ng-if="user != null" ng-click="logout()">
+                        <li><a title="Sign Out"><i class="fa fa-sign-out fa-lg clickable"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="alert alert-danger" role="alert" ng-if="generalError!=null">
+                <button type="button" class="close" ng-click="closeAlert()">×</button>
+                {{generalError}}
+            </div>
+            <div class="alert alert-warning" role="alert" ng-if="generalMessage!=null">
+                <button type="button" class="close" ng-click="closeAlert()">×</button>
+                {{generalMessage}}
+            </div>
+        </div>
+        <div class="container-fluid">
+            <div class="row" ng-view/>
+        </div>
+        <script src="bower_components/less/less.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="bower_components/angular-bootstrap/ui-bootstrap.js"></script>
+        <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+        <script src="bower_components/angular-route/angular-route.js"></script>
+        <script src="bower_components/angular-resource/angular-resource.js"></script>
+        <script src="bower_components/angular-cookies/angular-cookies.js"></script>
+        <script src="bower_components/angular-spinner/angular-spinner.js"></script>
+        <script src="bower_components/angular-spinner/spin.js"></script>
+        <script src="bower_components/sockjs-client/sockjs.js"></script>
+        <script src="bower_components/stomp-websocket/stomp.js"></script>
+        <script src="scripts/app.js"></script>
+        <script src="scripts/directives.js"></script>
+        <script src="scripts/filters.js"></script>
+        <script src="scripts/resources.js"></script>
+        <script src="scripts/services.js"></script>
+        <script src="scripts/controllers.js"></script>
+    </body>
+</html>
