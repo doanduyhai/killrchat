@@ -1,0 +1,30 @@
+git checkout exercise_1_specs
+git rebase master
+git checkout exercise_1_solution
+git rebase exercise_1_specs
+
+git checkout exercise_2_specs
+git rebase exercise_1_solution
+git checkout exercise_2_solution
+git rebase exercise_2_specs
+
+git checkout exercise_3_specs
+git rebase exercise_2_solution
+git checkout exercise_3_solution
+git rebase exercise_3_specs
+
+git checkout exercise_4_specs
+git rebase exercise_3_solution
+git checkout exercise_4_solution
+git rebase exercise_4_specs
+
+git checkout master
+git push origin master
+git push -f origin exercise_1_specs
+git push -f origin exercise_1_solution
+git push -f origin exercise_2_specs
+git push -f origin exercise_2_solution
+git push -f origin exercise_3_specs
+git push -f origin exercise_3_solution
+git push -f origin exercise_4_specs
+git push -f origin exercise_4_solution

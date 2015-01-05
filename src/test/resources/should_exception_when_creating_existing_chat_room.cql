@@ -1,0 +1,1 @@
+INSERT INTO killrchat.chat_rooms(room_name) VALUES ('all');
