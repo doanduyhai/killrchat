@@ -1,0 +1,46 @@
+<div class="panel panel-default" ng-controller="ListAllRoomsCtrl">
+    <div class="panel-heading text-center"><h2>Rooms list</h2></div>
+    <div class="panel-body">
+        <table class="table table-bordered table-hover table-condensed">
+            <thead>
+            <tr>
+                <th>Room name</th>
+                <th>Creator</th>
+                <th>Participants count</th>
+                <th>Participants</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="room in allRooms">
+                <td>
+                    <a title="Enter '{{room.roomName}}' room" ng-if="user.chatRooms.indexOf(room.roomName)>=0"
+                       ng-click="enterRoom(room.roomName)"
+                       class="clickable"><strong>{{room.roomName}}</strong></a>
+                    <span ng-if="user.chatRooms.indexOf(room.roomName)==-1">{{room.roomName}}</span>
+
+                    <i title="Join '{{room.roomName}}' room" class="fa fa-sign-in fa-lg pull-right clickable room-action"
+                       ng-if="user.chatRooms.indexOf(room.roomName)==-1"
+                       ng-click="joinRoom(room)"></i>
+                    <i title="Leave '{{room.roomName}}' room" class="fa fa-sign-out fa-lg pull-right clickable room-action"
+                       ng-if="user.chatRooms.indexOf(room.roomName)>=0"
+                       ng-click="quitRoom(room)"></i>
+                </td>
+                <td>{{room.creator | displayUserName}}</td>
+                <td>{{room.participants.length || 0}}</td>
+                <td>
+                    <span class="dropdown" dropdown ng-if="room.participants.length>0">
+                      <a href class="dropdown-toggle" dropdown-toggle>
+                          List of participants
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li ng-repeat="participant in room.participants">
+                              <a href>{{participant | displayUserName}}</a>
+                          </li>
+                      </ul>
+                    </span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
