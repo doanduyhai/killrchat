@@ -2,7 +2,13 @@
     <div class="row chat-room-banner-height">
         <div class="row chat-room-banner bg-primary">
             <div class="col-md-1 chat-room-banner-icon">
-                <i class="fa fa-users fa-3x"></i>
+                <i class="fa fa-users fa-3x clickable"
+                    popover-placement="bottom"
+                    popover-trigger="mouseenter"
+                    popover-title="Room details"
+                    popover="<p class='text-left text_nowrap'>Creator&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{{state.currentRoom.creator | displayUserName}}</strong><p/>
+                     <p class='text-left'>Creation date : <em>{{state.currentRoom.creationDate}}</em></p>"
+                    popover-append-to-body="true"></i>
             </div>
             <div class="col-md-10">
                 <div class="row chat-room-banner-name">

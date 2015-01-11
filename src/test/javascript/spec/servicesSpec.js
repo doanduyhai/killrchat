@@ -565,10 +565,10 @@ describe('Services Tests', function () {
             //Given
             var $scope = $rootScope.$new();
             $scope.user = {
-                getLightModel:  function() {
-                    return $scope.user;
-                },
                 chatRooms: ['games','politics']
+            };
+            $scope.getLightModel =  function() {
+                return $scope.user;
             };
             $scope.state = {
                 currentRoom: 'games'
@@ -602,10 +602,11 @@ describe('Services Tests', function () {
 
             var $scope = $rootScope.$new();
             $scope.user = {
-                getLightModel:  function() {
-                    return $scope.user;
-                },
-            }
+            };
+
+            $scope.getLightModel =  function() {
+                return $scope.user;
+            };
             var rejected = $q.defer();
             rejected.reject('error');
 
@@ -1205,8 +1206,8 @@ describe('Services Tests', function () {
             $scope.user = {
                 chatRooms: ['gossip']
             };
-            $scope.getLightModel =  function(obj) {
-                return obj;
+            $scope.getLightModel =  function() {
+                return $scope.user;
             };
             $scope.allRooms =[];
             $scope.enterRoom = function(roomName){}
@@ -1239,8 +1240,8 @@ describe('Services Tests', function () {
             $scope.user = {
                 chatRooms: ['gossip']
             };
-            $scope.getLightModel =  function(obj) {
-                return obj;
+            $scope.getLightModel =  function() {
+                return $scope.user;
             };
             $scope.allRooms =[];
 

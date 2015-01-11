@@ -115,7 +115,7 @@ killrChat.controller('ChatNavigationCtrl',function ($scope, NavigationService) {
 killrChat.controller('ChatCtrl', function($scope, ChatService, UserRoomsService){
     $scope.messages = [];
     $scope.newMessage = {
-        author: $scope.getLightModel($scope.user),
+        author: $scope.getLightModel(),
         content:null
     };
     $scope.socket = {
@@ -158,7 +158,7 @@ killrChat.controller('NewRoomCtrl', function($scope, RoomCreationService){
     $scope.newRoom = {
         roomName:null,
         payload : {
-            creator: $scope.getLightModel($scope.user),
+            creator: $scope.getLightModel(),
             banner:null
         }
     };

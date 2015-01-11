@@ -183,9 +183,6 @@ killrChat.directive('participantPopup', function($rootElement, $filter, $positio
 
                             // Now set the calculated positioning.
                             parent.css( ttPosition );
-
-                            var title = foundPopupContent.parent().children().eq(0);
-                            title.addClass("participant-title");
                         })
                         .catch(GeneralNotificationService.displayGeneralError);
                 }

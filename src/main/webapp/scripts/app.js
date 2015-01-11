@@ -26,7 +26,7 @@ killrChat.run(["$rootScope", "$templateCache", "RememberMeService", "User", func
         "  <div class=\"arrow\"></div>\n" +
         "\n" +
         "  <div class=\"popover-inner\">\n" +
-        "      <h3 class=\"popover-title\" ng-bind-html=\"title | unsafe\" ng-show=\"title\"></h3>\n" +
+        "      <h3 class=\"popover-title killrchat-popover-title\" ng-bind-html=\"title | unsafe\" ng-show=\"title\"></h3>\n" +
         "      <div class=\"popover-content text-center\"ng-bind-html=\"content | unsafe\"></div>\n" +
         "  </div>\n" +
         "</div>\n" +
@@ -42,11 +42,11 @@ killrChat.run(["$rootScope", "$templateCache", "RememberMeService", "User", func
         GeneralNotificationService.displayGeneralError(rejection);
     });
 
-    $rootScope.getLightModel = function(user) {
+    $rootScope.getLightModel = function() {
         return {
-            login: user.login,
-            firstname: user.firstname,
-            lastname: user.lastname
+            login: $rootScope.user.login,
+            firstname: $rootScope.user.firstname,
+            lastname: $rootScope.user.lastname
         }
     }
 

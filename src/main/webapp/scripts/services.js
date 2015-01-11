@@ -158,7 +158,7 @@ killrChat.service('NavigationService', function(Room, ParticipantService, UserRo
     };
 
     this.quitRoomBackHome = function($scope, roomToLeave) {
-        new Room($scope.getLightModel($scope.user))
+        new Room($scope.getLightModel())
             .$removeParticipant({roomName:roomToLeave})
             .then(function(){
                 UserRoomsService.removeRoomFromUserRoomsList($scope.user.chatRooms, roomToLeave);
@@ -340,10 +340,10 @@ killrChat.service('ListAllRoomsService', function(Room, RoomService, Participant
     };
 
     this.joinRoom = function($scope, roomToJoin) {
-        new Room($scope.getLightModel($scope.user))
+        new Room($scope.getLightModel())
             .$addParticipant({roomName:roomToJoin.roomName})
             .then(function(){
-                RoomService.addMeToThisRoom($scope.getLightModel($scope.user), $scope.allRooms, roomToJoin);
+                RoomService.addMeToThisRoom($scope.getLightModel(), $scope.allRooms, roomToJoin);
                 RoomService.addRoomToUserRoomsList($scope.user.chatRooms, roomToJoin.roomName);
                 $scope.enterRoom(roomToJoin.roomName);
             })
@@ -351,10 +351,10 @@ killrChat.service('ListAllRoomsService', function(Room, RoomService, Participant
     };
 
     this.quitRoom = function($scope, roomToLeave) {
-        new Room($scope.getLightModel($scope.user))
+        new Room($scope.getLightModel())
             .$removeParticipant({roomName:roomToLeave.roomName})
             .then(function(){
-                RoomService.removeMeFromThisRoom($scope.getLightModel($scope.user), $scope.allRooms, roomToLeave);
+                RoomService.removeMeFromThisRoom($scope.getLightModel(), $scope.allRooms, roomToLeave);
                 RoomService.removeRoomFromUserRoomsList($scope.user.chatRooms, roomToLeave.roomName);
             })
             .catch(GeneralNotificationService.displayGeneralError);
