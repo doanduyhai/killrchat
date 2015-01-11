@@ -3,9 +3,11 @@ CREATE KEYSPACE IF NOT EXISTS killrchat WITH replication = {'class': 'SimpleStra
 CREATE TABLE IF NOT EXISTS killrchat.security_tokens(
     series text,
     token_date timestamp,
+    authorities set<text>,
     user_agent text,
     token_value text,
-    user text,
+    login text,
+    pass text,
     ip_address text,
     PRIMARY KEY(series)
 );
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS killrchat.chat_rooms(
     room_name text,
     creation_date timestamp,
     name text,
+    creator_login text,
     participants set<text>,
     banner text,
     creator text,
