@@ -1,28 +1,30 @@
 KillrChat
 ====================
 
-A hand's on exercise for Cassandra 2.1
+A hand's on exercise for Cassandra 2.1.
 
 
 # Introduction
 
-This hands-on will make you, step by step with TDD, create a working chat application using
+This hands-on will make you, step by step with unit tests, create a working chat application using
 
 * **[Apache Cassandra™]**
 * **[Achilles]**
 * **[Spring Boot]**
 * **[AngularJS]** + **[UI Bootstrap]**
 
-The hands-on will focus on the data modelling part, you need to
+The hands-on will focus on the data modelling part, you need to:
 
 1. understand the data model (tables)
 2. implement the services to make the tests pass using **[Achilles]**
 
-All the front-end, as well as the REST resource and all Spring configuration config and other glue code is provided as a convenience so that participants can focus solely on the data modelling and service layer
+All the front-end, as well as the REST resource and all Spring configuration config and other glue code is provided as a
+convenience so that participants can focus solely on the data modelling and service layer.
 
-For object mapping, we use **[Achilles]** which provides many tools to make development more effective and easier. We'll use the **[JUnit rule support]** from **[Achilles]** to start an embedded Cassandra in memory for unit testing.
+For object mapping, we use **[Achilles]** which provides many tools to make development more effective and easier. We'll
+use the **[JUnit rule support]** from **[Achilles]** to start an embedded Cassandra in memory for unit testing.
 
-Once all the exercises are done, we can have some fun using the real chat !
+Once all the exercises are done, we can have some fun using the real chat!
 
 # Running the application
 
@@ -36,38 +38,35 @@ Then enter the folder `cd killrchat`
 
 To run the application in the development mode:
 
-<pre>
-killrchat&gt; mvn clean test
-killrchat&gt; mvn spring-boot:run -Pdev
-</pre>
+    killrchat> mvn clean test
+    killrchat> mvn spring-boot:run
 
 When running the application in dev mode, **Achilles** will start an embedded Cassandra server and create
 the following data folders:
 
-1. /tmp/killrchat_cassandra/data
-2. /tmp/killrchat_cassandra/commitlog
-3. /tmp/killrchat_cassandra/saved_caches
+1. `/tmp/killrchat_cassandra/data`
+2. `/tmp/killrchat_cassandra/commitlog`
+3. `/tmp/killrchat_cassandra/saved_caches`
 
-You can change those default values in the `src/main/resources/config/application.yml` file
+You can change those default values in the `src/main/resources/config/application.yml` file.
 
-
-Then connect to the chat by opening your browser at `http://localhost:8080/killrchat/index.html`
+Then connect to the chat by opening your browser at
+[http://localhost:8080/killrchat/index.html](http://localhost:8080/killrchat/index.html).
 
 ## Production mode
 
 To run the application in the production mode:
 
-<pre>
-killrchat&gt; mvn clean test
-killrchat&gt; mvn spring-boot:run -Pprod
-</pre>
+    killrchat> mvn clean test
+    killrchat> mvn spring-boot:run -Pprod
 
-When running the application in dev mode, **Achilles** will connect to an existing Cassandra server. You can
+When running the application in prod mode, **Achilles** will connect to an existing Cassandra server. You can
 configure the server host and port in the the `src/main/resources/config/application.yml` file.
 By default **Achilles** will execute the `src/main/resources/cassandra/schema_creation.cql` script to create the
-`killrchat` keyspace and appropriate tables
+`killrchat` keyspace and appropriate tables.
 
-Then connect to the chat by opening your browser at `http://localhost:8080/killrchat/index.html`
+Then connect to the chat by opening your browser at
+[http://localhost:8080/killrchat/index.html](http://localhost:8080/killrchat/index.html).
 
 To deploy the application in multiple back-end servers, you will need to reconfigure the messaging system in the
 **`ChatRoomResource`** and **`MessageResource`**. For the hand's on, we use an in-memory messaging system but for
@@ -75,8 +74,8 @@ production you'd probably want to plugin a distributed messaging broker like Rab
 
 ## Packaging the application
 
- To package **KillrChat** and build a stand-alone Java jar archive, type `mvn package`. It will generate
-a **killrchat-1.0.jar** file in the `target` folder
+To package **KillrChat** and build a stand-alone Java jar archive, type `mvn package`. It will generate a
+**killrchat-1.0.jar** file in the `target` folder
 
 # Exercises
 
@@ -85,22 +84,24 @@ a **killrchat-1.0.jar** file in the `target` folder
 * **[Exercise 3](Exercise3.md)**: manage participants joining and leaving rooms
 * **[Exercise 4](Exercise4.md)**: manage chat messages
 
-# Remarks
+# Comments
 
-The data model for chat room message is still not perfect because it is a wide row. Typically the partition will grow over time and performance will suffer.
+The data model for chat room message is still not perfect because it is a wide row. Typically the partition will grow
+over time and performance will suffer.
 
-The solution is to use **[bucketing]** techniques but it is an advanced data modelling topic, far beyond the goal of this hands-on
+The solution is to use **[bucketing]** techniques but it is an advanced data modelling topic, far beyond the goal of
+this hands-on.
 
 Alternatively, we can use the **[DateTieredCompactionStrategy]** to make reading recent messages faster.
 
-[Apache Cassandra™]: http://planetcassandra.org/cassandra/
+[Apache Cassandra™]: http://planetcassandra.org/cassandra
 [Achilles]: http://www.achilles.io
 [JUnit rule support]: https://github.com/doanduyhai/Achilles/wiki/Unit-testing#usage
-[Spring Boot]: http://projects.spring.io/spring-boot/
-[AngularJS]: https://angularjs.org/
-[UI Bootstrap]: http://angular-ui.github.io/bootstrap/
-[Postman]: http://www.getpostman.com/
-[DevCenter]: http://planetcassandra.org/devcenter/
+[Spring Boot]: http://projects.spring.io/spring-boot
+[AngularJS]: https://angularjs.org
+[UI Bootstrap]: http://angular-ui.github.io/bootstrap
+[Postman]: http://www.getpostman.com
+[DevCenter]: http://planetcassandra.org/devcenter
 [Datastax]: http://www.datastax.com
 [bucketing]: http://www.datastax.com/dev/blog/advanced-time-series-with-cassandra
 [DateTieredCompactionStrategy]: http://www.datastax.com/dev/blog/datetieredcompactionstrategy
