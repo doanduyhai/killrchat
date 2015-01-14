@@ -12,6 +12,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 import info.archinnov.achilles.exception.AchillesLightWeightTransactionException;
+import info.archinnov.achilles.persistence.Batch;
 import info.archinnov.achilles.persistence.PersistenceManager;
 import info.archinnov.achilles.type.OptionsBuilder;
 import org.springframework.stereotype.Service;
@@ -79,15 +80,16 @@ public class ChatRoomService {
 
     public void addUserToRoom(String roomName, LightUserModel participant) {
         final String newParticipant = participant.getLogin();
-        final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, roomName);
-        chatRoomProxy.getParticipants().add(participant);
 
         try {
+            final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, roomName);
+            chatRoomProxy.getParticipants().add(participant);
             manager.update(chatRoomProxy, ifEqualCondition("name", roomName));
         } catch (AchillesLightWeightTransactionException ex) {
             throw new ChatRoomDoesNotExistException(format("The chat room '%s' does not exist", roomName));
         }
 
+        // Add chat room to user chat room list too
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, newParticipant);
         userProxy.getChatRooms().add(roomName);
         manager.update(userProxy);
@@ -99,6 +101,7 @@ public class ChatRoomService {
         chatRoomProxy.getParticipants().remove(participant);
         manager.update(chatRoomProxy);
 
+        // Remove chat room from user chat room list too
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, participantToBeRemoved);
         userProxy.getChatRooms().remove(roomName);
         manager.update(userProxy);
@@ -114,11 +117,17 @@ public class ChatRoomService {
             throw new IncorrectRoomException(ex.getMessage());
         }
 
+        // Remove this chat room from the chat room list of ALL current participants using BATCH for eventual ATOMICITY
+        final Batch batch = manager.createBatch();
+
         for (LightUserModel participant : participants) {
             final UserEntity proxy = manager.forUpdate(UserEntity.class, participant.getLogin());
             proxy.getChatRooms().remove(roomName);
-            manager.update(proxy);
+            batch.update(proxy);
         }
+
+        //Flush all the mutations here
+        batch.endBatch();
 
         return String.format(DELETION_MESSAGE, roomName, creatorLogin);
     }
