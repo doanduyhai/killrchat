@@ -75,7 +75,15 @@ production you'd probably want to plugin a distributed messaging broker like Rab
 ## Packaging the application
 
 To package **KillrChat** and build a stand-alone Java jar archive, type `mvn package`. It will generate a
-**killrchat-1.0.jar** file in the `target` folder
+**killrchat-1.0.war** file in the `target` folder
+
+To run the application in development mode:
+
+    > java -jar killrchat-1.0.war --spring.profiles.active=dev -Dlogback.configurationFile=logback_dev.xml
+
+To run the application in production mode:
+
+    > java -jar killrchat-1.0.war --spring.profiles.active=prod -Dlogback.configurationFile=logback_prod.xml
 
 # Exercises
 
