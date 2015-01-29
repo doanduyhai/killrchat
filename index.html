@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Killrchat by doanduyhai</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Killrchat</h1>
+        <p class="header">KillrChat, a scalable chat backed by Apache Cassandra and Spring Boot</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/doanduyhai/killrchat/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/doanduyhai/killrchat/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/doanduyhai/killrchat">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/doanduyhai">doanduyhai</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="killrchat" class="anchor" href="#killrchat" aria-hidden="true"><span class="octicon octicon-link"></span></a>KillrChat</h1>
+
+<p>A hand's on exercise for Cassandra 2.1.</p>
+
+<h1>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h1>
+
+<p>This hands-on will make you, step by step with unit tests, create a working chat application using</p>
+
+<ul>
+<li><strong><a href="http://planetcassandra.org/cassandra">Apache Cassandra™</a></strong></li>
+<li><strong><a href="http://www.achilles.io">Achilles</a></strong></li>
+<li><strong><a href="http://projects.spring.io/spring-boot">Spring Boot</a></strong></li>
+<li>
+<strong><a href="https://angularjs.org">AngularJS</a></strong> + <strong><a href="http://angular-ui.github.io/bootstrap">UI Bootstrap</a></strong>
+</li>
+</ul>
+
+<p>The hands-on will focus on the data modelling part, you need to:</p>
+
+<ol>
+<li>understand the data model (tables)</li>
+<li>implement the services to make the tests pass using <strong><a href="http://www.achilles.io">Achilles</a></strong>
+</li>
+</ol>
+
+<p>All the front-end, as well as the REST resource and all Spring configuration config and other glue code is provided as a
+convenience so that participants can focus solely on the data modelling and service layer.</p>
+
+<p>For object mapping, we use <strong><a href="http://www.achilles.io">Achilles</a></strong> which provides many tools to make development more effective and easier. We'll
+use the <strong><a href="https://github.com/doanduyhai/Achilles/wiki/Unit-testing#usage">JUnit rule support</a></strong> from <strong><a href="http://www.achilles.io">Achilles</a></strong> to start an embedded Cassandra in memory for unit testing.</p>
+
+<p>Once all the exercises are done, we can have some fun using the real chat!</p>
+
+<h1>
+<a id="running-the-application" class="anchor" href="#running-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the application</h1>
+
+<blockquote>
+<p>Warning! You'll need a recent and decent browser (no IE8) to make the chat front-end work:
+  IE10, Chrome, FireFox ...</p>
+</blockquote>
+
+<p>First clone the repository with <code>git clone https://github.com/doanduyhai/killrchat.git</code>
+Then enter the folder <code>cd killrchat</code></p>
+
+<h2>
+<a id="development-mode" class="anchor" href="#development-mode" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development mode</h2>
+
+<p>To run the application in the development mode:</p>
+
+<pre><code>killrchat&gt; mvn clean test
+killrchat&gt; mvn spring-boot:run
+</code></pre>
+
+<p>When running the application in dev mode, <strong>Achilles</strong> will start an embedded Cassandra server and create
+the following data folders:</p>
+
+<ol>
+<li><code>/tmp/killrchat_cassandra/data</code></li>
+<li><code>/tmp/killrchat_cassandra/commitlog</code></li>
+<li><code>/tmp/killrchat_cassandra/saved_caches</code></li>
+</ol>
+
+<p>You can change those default values in the <code>src/main/resources/config/application.yml</code> file.</p>
+
+<p>Then connect to the chat by opening your browser at
+<a href="http://localhost:8080/killrchat/index.html">http://localhost:8080/killrchat/index.html</a>.</p>
+
+<h2>
+<a id="production-mode" class="anchor" href="#production-mode" aria-hidden="true"><span class="octicon octicon-link"></span></a>Production mode</h2>
+
+<p>To run the application in the production mode:</p>
+
+<pre><code>killrchat&gt; mvn clean test
+killrchat&gt; mvn spring-boot:run -Pprod
+</code></pre>
+
+<p>When running the application in prod mode, <strong>Achilles</strong> will connect to an existing Cassandra server. You can
+configure the server host and port in the the <code>src/main/resources/config/application.yml</code> file.
+By default <strong>Achilles</strong> will execute the <code>src/main/resources/cassandra/schema_creation.cql</code> script to create the
+<code>killrchat</code> keyspace and appropriate tables.</p>
+
+<p>Then connect to the chat by opening your browser at
+<a href="http://localhost:8080/killrchat/index.html">http://localhost:8080/killrchat/index.html</a>.</p>
+
+<p>To deploy the application in multiple back-end servers, you will need to reconfigure the messaging system in the
+<strong><code>ChatRoomResource</code></strong> and <strong><code>MessageResource</code></strong>. For the hand's on, we use an in-memory messaging system but for
+production you'd probably want to plugin a distributed messaging broker like RabbitMQ.</p>
+
+<h2>
+<a id="packaging-the-application" class="anchor" href="#packaging-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Packaging the application</h2>
+
+<p>To package <strong>KillrChat</strong> and build a stand-alone Java jar archive, type <code>mvn package</code>. It will generate a
+<strong>killrchat-1.0.war</strong> file in the <code>target</code> folder</p>
+
+<p>To run the application in development mode:</p>
+
+<pre><code>&gt; java -jar killrchat-1.0.war --spring.profiles.active=dev -Dlogback.configurationFile=logback_dev.xml
+</code></pre>
+
+<p>To run the application in production mode:</p>
+
+<pre><code>&gt; java -jar killrchat-1.0.war --spring.profiles.active=prod -Dlogback.configurationFile=logback_prod.xml
+</code></pre>
+
+<h1>
+<a id="exercises" class="anchor" href="#exercises" aria-hidden="true"><span class="octicon octicon-link"></span></a>Exercises</h1>
+
+<ul>
+<li>
+<strong><a href="Exercise1.md">Exercise 1</a></strong>: manage accounts</li>
+<li>
+<strong><a href="Exercise2.md">Exercise 2</a></strong>: manage chat rooms</li>
+<li>
+<strong><a href="Exercise3.md">Exercise 3</a></strong>: manage participants joining and leaving rooms</li>
+<li>
+<strong><a href="Exercise4.md">Exercise 4</a></strong>: manage chat messages</li>
+</ul>
+
+<h1>
+<a id="comments" class="anchor" href="#comments" aria-hidden="true"><span class="octicon octicon-link"></span></a>Comments</h1>
+
+<p>The data model for chat room message is still not perfect because it is a wide row. Typically the partition will grow
+over time and performance will suffer.</p>
+
+<p>The solution is to use <strong><a href="http://www.datastax.com/dev/blog/advanced-time-series-with-cassandra">bucketing</a></strong> techniques but it is an advanced data modelling topic, far beyond the goal of
+this hands-on.</p>
+
+<p>Alternatively, we can use the <strong><a href="http://www.datastax.com/dev/blog/datetieredcompactionstrategy">DateTieredCompactionStrategy</a></strong> to make reading recent messages faster.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
