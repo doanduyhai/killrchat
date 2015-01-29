@@ -87,10 +87,10 @@ To run the application in production mode:
 
 # Exercises
 
-* **[Exercise 1](Exercise1.md)**: manage accounts
-* **[Exercise 2](Exercise2.md)**: manage chat rooms
-* **[Exercise 3](Exercise3.md)**: manage participants joining and leaving rooms
-* **[Exercise 4](Exercise4.md)**: manage chat messages
+* **[Exercise 1](https://github.com/doanduyhai/killrchat/blob/master/Exercise1.md)**: manage accounts
+* **[Exercise 2](https://github.com/doanduyhai/killrchat/blob/master/Exercise2.md)**: manage chat rooms
+* **[Exercise 3](https://github.com/doanduyhai/killrchat/blob/master/Exercise3.md)**: manage participants joining and leaving rooms
+* **[Exercise 4](https://github.com/doanduyhai/killrchat/blob/master/Exercise4.md)**: manage chat messages
 
 # Comments
 
