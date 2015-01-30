@@ -39,7 +39,7 @@ Then enter the folder `cd killrchat`
 To run the application in the development mode:
 
     killrchat> mvn clean test
-    killrchat> mvn spring-boot:run
+    killrchat> mvn spring-boot:run -Pdev
 
 When running the application in dev mode, **Achilles** will start an embedded Cassandra server and create
 the following data folders:
