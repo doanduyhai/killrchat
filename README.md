@@ -30,6 +30,7 @@ Once all the exercises are done, we can have some fun using the real chat!
 
 > Warning! You'll need a recent and decent browser (no IE8) to make the chat front-end work:
   IE10, Chrome, FireFox ...
+> Warning! You should have Maven and Java (1.7+) installed and functionnal, other component will be installed automatically
 
 First clone the repository with `git clone https://github.com/doanduyhai/killrchat.git`
 Then enter the folder `cd killrchat`
