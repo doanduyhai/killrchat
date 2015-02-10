@@ -1,0 +1,55 @@
+<div id="chatMainSection" class="col-md-8 chat-zone">
+    <div class="row chat-room-banner-height">
+        <div class="row chat-room-banner bg-primary">
+            <div class="col-md-1 chat-room-banner-icon">
+                <i class="fa fa-users fa-3x clickable"
+                    popover-placement="bottom"
+                    popover-trigger="mouseenter"
+                    popover-title="Room details"
+                    popover="<p class='text-left text_nowrap'>Creator&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{{state.currentRoom.creator | displayUserName}}</strong><p/>
+                     <p class='text-left'>Creation date : <em>{{state.currentRoom.creationDate}}</em></p>"
+                    popover-append-to-body="true"></i>
+            </div>
+            <div class="col-md-10">
+                <div class="row chat-room-banner-name">
+                    <span>{{state.currentRoom.roomName}}</span>
+                </div>
+                <div class="row chat-room-banner-text">
+                    <span><em><small>{{state.currentRoom.banner}}</small></em></span>
+                </div>
+            </div>
+            <div class="col-md-1 chat-room-banner-remove" ng-if="state.currentRoom.creator.login == user.login">
+                <i title="Click here to remove the '{{state.currentRoom.roomName}}' room and kick out all participants"
+                   class="fa fa-remove fa-2x clickable"
+                        ng-click="deleteRoomWithParticipants(state.currentRoom)"></i>
+            </div>
+        </div>
+    </div>
+    <div class="row chat-room-messages-height">
+        <div id="chat-scroll" class="chat-room-messages">
+            <span us-spinner="{radius:30, width:8, length: 16}" spinner-key="loading-spinner"></span>
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="message in messages">
+                    <p class="message-metadata text-right">
+                        <i class="fa fa-clock-o"></i>&nbsp;&nbsp;{{message.creationDate | dateFormatToHHMMSS}}&nbsp;&nbsp;<strong>{{message.systemMessage ? '': (message.author | displayUserName)}}</strong>
+                    </p>
+                    <p ng-class="{false: 'message-content text-justify', true: 'message-content text-justify text-muted text-italic'}[message.systemMessage]">{{message.content}}</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="row chat-room-separator-height"></div>
+    <div class="row chat-room-input-message well well-lg">
+        <div class="col-md-12">
+            <div class="input-group">
+                <input type="text" class="form-control" name="new_message" placeholder="New message" ng-model="newMessage.content" ng-enter="postMessage()"/>
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" ng-click="postMessage()">:D</button>
+            </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

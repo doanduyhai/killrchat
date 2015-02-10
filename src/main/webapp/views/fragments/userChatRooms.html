@@ -1,0 +1,19 @@
+<div class="col-md-2 sidebar">
+    <p>
+        <span title="Click here to go back to home page" class="navigation-icon clickable"><i class="fa fa-home fa-lg" ng-click="home()"></i></span>
+        <span title="Click here to list all chat rooms" class="navigation-icon clickable"><i class="fa fa-list-alt fa-lg" ng-click="allRooms()"></i></span>
+        <span title="Click here to create a new chat room" class="navigation-icon clickable"><i class="fa fa-plus-square fa-lg" ng-click="newRoom()"></i></span>
+    </p>
+    <p>My rooms</p>
+    <hr/>
+    <!--<ul class="nav nav-sidebar full-height" ng-controller="UserRoomsCtrl">-->
+    <ul class="nav nav-sidebar full-height">
+        <li ng-repeat="room in user.chatRooms">
+            <a>
+                <i class="fa fa-comments fa-lg pull-left"></i>
+                <span title="Click here to open this chat room" class="clickable" ng-click="enterRoom(room)">&nbsp;&nbsp;{{room}}</span>
+                <i title="Click here to leave the {{room}} room" class="clickable fa fa-sign-out fa-lg pull-right exit-room" ng-click="quitRoomBackHome(room)"></i>
+            </a>
+        </li>
+    </ul>
+</div>

@@ -1,0 +1,32 @@
+<div ng-controller="SignInCtrl" class="signin-background">
+    <p class="text-danger text-center" ng-if="loginError"><strong>{{loginError}}</strong></p>
+    <form class="form-signin" role="form" name="signin_form">
+        <h2 class="form-signin-heading text-center"> </h2>
+        <label for="j_username" class="sr-only">Login</label>
+        <input type="login" id="j_username" class="form-control"
+               placeholder="Login" required autofocus
+               ng-model="username"/>
+        <label for="j_password" class="sr-only">Password</label>
+        <input type="password" id="j_password" class="form-control"
+               placeholder="Password" required
+               ng-model="password"/>
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" value="remember-me"
+                       id="_spring_security_remember_me"
+                        ng-model="rememberMe"> Remember me
+            </label>
+        </div>
+        <button class="btn btn-lg btn-block" type="submit"
+                ng-click="login()"
+                ng-disabled="signin_form.$invalid">
+            Log me in!
+        </button>
+    </form>
+    <br/>
+    <p class="text-primary text-center" ng-if="userCreated == null">Do not have an account ? Sign up <strong><a ng-click="open()">here</a></strong></p>
+    <p class="text-success text-center" ng-if="userCreated == true"><strong>You can now log in with your new account</strong></p>
+
+    <!--Signup Modal Panel-->
+    <div id="signUpModal" ng-include="'views/fragments/signup.html'"></div>
+</div>
