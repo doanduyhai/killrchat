@@ -26,6 +26,12 @@ use the **[JUnit rule support]** from **[Achilles]** to start an embedded Cassan
 
 Once all the exercises are done, we can have some fun using the real chat!
 
+# Presentation slides
+
+ If you're not familiar with **Cassandra**, please take a look at the [introduction slides](https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Cassandra%20Intro.pdf)
+
+ For a presentation of **KillrChat**, look at the slides [here](https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Exercises%20Handbook.pdf)
+
 # Running the application
 
 > Warning! You'll need a recent and decent browser (no IE8) to make the chat front-end work:
