@@ -182,6 +182,10 @@ public class ChatRoomServiceTest {
         final Row room = session.execute(select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
         assertThat(room).isNull();
 
+        final List<Row> messages = session.execute(select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
+
+        assertThat(messages).isEmpty();
+
         final Row jdoeRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
         final Row hsueRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
         final Row aliceRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
@@ -191,6 +195,8 @@ public class ChatRoomServiceTest {
         assertThat(hsueRooms.isNull("chat_rooms")).isTrue();
         assertThat(aliceRooms.isNull("chat_rooms")).isTrue();
         assertThat(bobRooms.isNull("chat_rooms")).isTrue();
+
+
     }
 
     @Test(expected = IncorrectRoomException.class)
