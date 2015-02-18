@@ -26,10 +26,18 @@ use the **[JUnit rule support]** from **[Achilles]** to start an embedded Cassan
 
 Once all the exercises are done, we can have some fun using the real chat!
 
+# Presentation slides
+
+ If you're not familiar with **Cassandra**, please take a look at the [introduction slides](https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Cassandra%20Intro.pdf)
+
+ For a presentation of **KillrChat**, look at the slides [here](https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Exercises%20Handbook.pdf)
+
 # Running the application
 
 > Warning! You'll need a recent and decent browser (no IE8) to make the chat front-end work:
   IE10, Chrome, FireFox ...
+  
+> Warning! You should have Maven and Java (1.7+) installed and functionnal, other component will be installed automatically
 
 First clone the repository with `git clone https://github.com/doanduyhai/killrchat.git`
 Then enter the folder `cd killrchat`
@@ -39,7 +47,7 @@ Then enter the folder `cd killrchat`
 To run the application in the development mode:
 
     killrchat> mvn clean test
-    killrchat> mvn spring-boot:run
+    killrchat> mvn spring-boot:run -Pdev
 
 When running the application in dev mode, **Achilles** will start an embedded Cassandra server and create
 the following data folders:
@@ -75,14 +83,22 @@ production you'd probably want to plugin a distributed messaging broker like Rab
 ## Packaging the application
 
 To package **KillrChat** and build a stand-alone Java jar archive, type `mvn package`. It will generate a
-**killrchat-1.0.jar** file in the `target` folder
+**killrchat-1.0.war** file in the `target` folder
+
+To run the application in development mode:
+
+    > java -jar killrchat-1.0.war --spring.profiles.active=dev -Dlogback.configurationFile=logback_dev.xml
+
+To run the application in production mode:
+
+    > java -jar killrchat-1.0.war --spring.profiles.active=prod -Dlogback.configurationFile=logback_prod.xml
 
 # Exercises
 
-* **[Exercise 1](Exercise1.md)**: manage accounts
-* **[Exercise 2](Exercise2.md)**: manage chat rooms
-* **[Exercise 3](Exercise3.md)**: manage participants joining and leaving rooms
-* **[Exercise 4](Exercise4.md)**: manage chat messages
+* **[Exercise 1](https://github.com/doanduyhai/killrchat/blob/master/Exercise1.md)**: manage accounts
+* **[Exercise 2](https://github.com/doanduyhai/killrchat/blob/master/Exercise2.md)**: manage chat rooms
+* **[Exercise 3](https://github.com/doanduyhai/killrchat/blob/master/Exercise3.md)**: manage participants joining and leaving rooms
+* **[Exercise 4](https://github.com/doanduyhai/killrchat/blob/master/Exercise4.md)**: manage chat messages
 
 # Comments
 

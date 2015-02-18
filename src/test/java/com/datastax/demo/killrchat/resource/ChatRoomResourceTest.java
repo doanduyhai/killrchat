@@ -154,7 +154,7 @@ public class ChatRoomResourceTest {
         };
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        Set<LightUserModel> participants = Sets.newHashSet(john);
+        Set<String> participants = Sets.newHashSet(john.getLogin());
 
         when(chatRoomService.deleteRoomWithParticipants("jdoe", "games", participants)).thenReturn("message");
 

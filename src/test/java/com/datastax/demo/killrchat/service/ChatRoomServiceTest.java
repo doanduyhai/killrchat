@@ -172,17 +172,19 @@ public class ChatRoomServiceTest {
     public void should_remove_chat_room_with_all_participants() throws Exception {
         //Given
         scriptExecutor.executeScript("should_remove_chat_room_with_all_participants.cql");
-        LightUserModel alice = new LightUserModel("alice", "Alice", "ALICE");
-        LightUserModel bob = new LightUserModel("bob", "Bob", "BOB");
 
         //When
-        final String message = service.deleteRoomWithParticipants("jdoe", "fairy", Sets.newHashSet(john, helen, alice, bob));
+        final String message = service.deleteRoomWithParticipants("jdoe", "fairy", Sets.newHashSet("jdoe", "hsue", "alice", "bob"));
 
         //Then
         assertThat(message).isEqualTo(format(DELETION_MESSAGE, "fairy", "jdoe"));
 
         final Row room = session.execute(select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
         assertThat(room).isNull();
+
+        final List<Row> messages = session.execute(select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
+
+        assertThat(messages).isEmpty();
 
         final Row jdoeRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
         final Row hsueRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
@@ -193,25 +195,16 @@ public class ChatRoomServiceTest {
         assertThat(hsueRooms.isNull("chat_rooms")).isTrue();
         assertThat(aliceRooms.isNull("chat_rooms")).isTrue();
         assertThat(bobRooms.isNull("chat_rooms")).isTrue();
+
+
     }
 
     @Test(expected = IncorrectRoomException.class)
     public void should_fails_to_delete_room_if_not_author() throws Exception {
         //Given
         scriptExecutor.executeScript("should_remove_chat_room_with_all_participants.cql");
-        LightUserModel alice = new LightUserModel("alice", "Alice", "ALICE");
-        LightUserModel bob = new LightUserModel("bob", "Bob", "BOB");
 
         //When
-        service.deleteRoomWithParticipants("hsue", "fairy", Sets.newHashSet(john, helen, alice, bob));
-    }
-
-    @Test(expected = IncorrectRoomException.class)
-    public void should_fails_to_delete_room_if_participants_list_does_not_match() throws Exception {
-        //Given
-        scriptExecutor.executeScript("should_remove_chat_room_with_all_participants.cql");
-
-        //When
-        service.deleteRoomWithParticipants("hsue", "fairy", Sets.newHashSet(john, helen));
+        service.deleteRoomWithParticipants("hsue", "fairy", Sets.newHashSet("jdoe", "hsue", "alice", "bob"));
     }
 }

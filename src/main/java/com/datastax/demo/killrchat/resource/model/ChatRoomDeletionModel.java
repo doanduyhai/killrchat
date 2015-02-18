@@ -1,30 +1,28 @@
 package com.datastax.demo.killrchat.resource.model;
 
-import com.datastax.demo.killrchat.model.LightUserModel;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChatRoomDeletionModel {
 
     @NotNull
-    private Set<LightUserModel> participants;
+    private Set<String> participants;
 
     public ChatRoomDeletionModel() {
     }
 
-    public ChatRoomDeletionModel(Set<LightUserModel> participants) {
+    public ChatRoomDeletionModel(Set<String> participants) {
         this.participants = participants;
     }
 
-    public Set<LightUserModel> getParticipants() {
+    public Set<String> getParticipants() {
         return participants;
     }
 
-    public void setParticipants(Set<LightUserModel> participants) {
+    public void setParticipants(Set<String> participants) {
         this.participants = participants;
     }
 }

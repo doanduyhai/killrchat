@@ -111,7 +111,7 @@ killrChat.service('UserRoomsService', function(Room, ParticipantService, General
     }
 
     this.deleteRoomWithParticipants = function(room,$scope) {
-        return new Room({participants:room.participants})
+        return new Room({participants:room.participants.map(function(p){return p.login})})
             .$delete({roomName: room.roomName})
             .catch(function(httpResponse){
                 GeneralNotificationService.displayGeneralError(httpResponse);
