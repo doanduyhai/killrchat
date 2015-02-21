@@ -40,34 +40,12 @@ public class MessageService {
 
     public List<MessageModel> fetchNextMessagesForRoom(String roomName, UUID fromMessageId, int pageSize) {
 
-        /**
-         * Specs
-         *
-         *  We want to fetch a list of chat messages, for a given room name. This is called a 'slice query'.
-         *  For this purpose, you can use Achilles Slice Query API:
-         *
-         *      Ex:
-         *
-         *      List<MyEntity> entities = manager.sliceQuery(MyEntity.class)
-         *                                  .forSelect()
-         *                                  .withPartitionComponents(partitionKey)
-         *                                  .fromClusterings(startingClusteringKey) //optional
-         *                                  .fromExclusiveToInclusiveBounds() //optional
-         *                                  .get(limit);
-         *
-         *       This will translate into the following CQL statement:
-         *
-         *          SELECT * FROM my_entity_table WHERE partitionKey = :partitionKey
-         *          AND clusteringColumn > :startingClusteringKey
-         *          LIMIT :limit
-         *
-         *  - fetch a list of chat messages, starting from 'fromMessageId' EXCLUDING, and limit the query to 'pageSize'
-         *
-         *  - for documentation on the Slice Query API (optional): https://github.com/doanduyhai/Achilles/wiki/Queries#slice-query
-         */
-
-        final List<MessageEntity> messages = null; //Implement the service here
-
+        final List<MessageEntity> messages = manager.sliceQuery(MessageEntity.class)
+                .forSelect()
+                .withPartitionComponents(roomName)
+                .fromClusterings(fromMessageId)
+                .fromExclusiveToInclusiveBounds()
+                .get(pageSize);
 
         return FluentIterable.from(messages).transform(TO_MODEL).toList().reverse();
     }
