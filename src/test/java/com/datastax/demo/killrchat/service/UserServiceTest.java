@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.UserAlreadyExistsException;
+import com.datastax.demo.killrchat.exceptions.UserNotFoundException;
 import com.datastax.demo.killrchat.model.UserModel;
 import info.archinnov.achilles.exception.AchillesBeanValidationException;
 import info.archinnov.achilles.script.ScriptExecutor;
@@ -93,6 +94,12 @@ public class UserServiceTest {
         service.createUser(model);
     }
 
+    @Test(expected = UserNotFoundException.class)
+    public void should_exception_if_user_not_found() throws Exception {
+        //Given
+        service.findByLogin("whatever");
+    }
+    
     @Test(expected = AchillesBeanValidationException.class)
     public void should_exception_if_password_not_set() throws Exception {
         //Given

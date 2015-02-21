@@ -17,27 +17,35 @@ import static com.datastax.demo.killrchat.entity.Schema.USERS;
 @Strategy(naming = NamingStrategy.SNAKE_CASE)
 public class UserEntity {
 
-    @PartitionKey
+    /**
+     * Specs
+     *
+     *  - annotate properly all properties
+     *  - use @PartitionKey and @Column
+     *  - use @EmptyCollectionIfNull on collections & maps to avoid de-serializing null instances from Cassandra
+     *  - for documentation on annotations: https://github.com/doanduyhai/Achilles/wiki/Achilles-Annotations
+     *
+     *  Remark:
+     *
+     *  The @Strategy annotation is necessary for camel-case transformation of Java attributes into Cassandra column names
+     *
+     *  - for documentation on entity mapping (optional): https://github.com/doanduyhai/Achilles/wiki/Entity-Mapping
+     *
+     */
+
     private String login;
 
     @NotEmpty
-    @Column
     private String pass;
 
-    @Column
     private String firstname;
 
-    @Column
     private String lastname;
 
-    @Column
     private String email;
 
-    @Column
     private String bio;
 
-    @EmptyCollectionIfNull
-    @Column
     private Set<String> chatRooms;
 
     public UserEntity(String login, String pass, String firstname, String lastname, String email, String bio) {
