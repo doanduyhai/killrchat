@@ -1,13 +1,21 @@
 package com.datastax.demo.killrchat.service;
 
+import static com.datastax.demo.killrchat.entity.Schema.*;
+import static com.datastax.demo.killrchat.service.ChatRoomService.DELETION_MESSAGE;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.*;
 
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.exceptions.ChatRoomAlreadyExistsException;
 import com.datastax.demo.killrchat.exceptions.ChatRoomDoesNotExistException;
+import com.datastax.demo.killrchat.exceptions.IncorrectRoomException;
 import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.collect.Sets;
 import info.archinnov.achilles.junit.AchillesResource;
 import info.archinnov.achilles.junit.AchillesResourceBuilder;
 import info.archinnov.achilles.script.ScriptExecutor;
@@ -18,14 +26,8 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
-
-import static com.datastax.demo.killrchat.entity.Schema.CHATROOMS;
-import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
-import static com.datastax.demo.killrchat.entity.Schema.USERS;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChatRoomServiceTest {
@@ -119,5 +121,88 @@ public class ChatRoomServiceTest {
         assertThat(rooms.get(0).getRoomName()).isEqualTo("saas");
         assertThat(rooms.get(1).getRoomName()).isEqualTo("bioshock");
         assertThat(rooms.get(2).getRoomName()).isEqualTo("java");
+    }
+
+    @Test
+    public void should_add_user_to_chat_room() throws Exception {
+        //Given
+        scriptExecutor.executeScript("should_add_user_to_chat_room.cql");
+
+        //When
+        service.addUserToRoom("politics", helen);
+
+        //Then
+        final Select.Where participants = select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+
+        final Row participantsRow = session.execute(participants).one();
+        final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
+
+        assertThat(participantsRow.getSet("participants",String.class)).containsOnly(johnAsJson, helenAsJson);
+        assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(1).containsExactly("politics");
+    }
+
+    @Test(expected = ChatRoomDoesNotExistException.class)
+    public void should_exception_when_adding_user_to_non_existing_chat_room() throws Exception {
+        service.addUserToRoom("politics", helen);
+    }
+
+    @Test
+    public void should_remove_user_from_chat_room() throws Exception {
+        //Given
+        scriptExecutor.executeScript("should_remove_user_from_chat_room.cql");
+
+        //When
+        service.removeUserFromRoom("politics", helen);
+
+        //Then
+        final Select.Where participants = select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+
+        final Row participantsRow = session.execute(participants).one();
+        final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
+
+        assertThat(participantsRow).isNotNull();
+        assertThat(participantsRow.getSet("participants", String.class)).containsOnly(johnAsJson);
+
+        assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(0);
+    }
+
+    @Test
+    public void should_remove_chat_room_with_all_participants() throws Exception {
+        //Given
+        scriptExecutor.executeScript("should_remove_chat_room_with_all_participants.cql");
+
+        //When
+        final String message = service.deleteRoomWithParticipants("jdoe", "fairy", Sets.newHashSet("jdoe", "hsue", "alice", "bob"));
+
+        //Then
+        assertThat(message).isEqualTo(format(DELETION_MESSAGE, "fairy", "jdoe"));
+
+        final Row room = session.execute(select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
+        assertThat(room).isNull();
+
+        final List<Row> messages = session.execute(select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
+
+        assertThat(messages).isEmpty();
+
+        final Row jdoeRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
+        final Row hsueRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
+        final Row aliceRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
+        final Row bobRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "bob"))).one();
+
+        assertThat(jdoeRooms.isNull("chat_rooms")).isTrue();
+        assertThat(hsueRooms.isNull("chat_rooms")).isTrue();
+        assertThat(aliceRooms.isNull("chat_rooms")).isTrue();
+        assertThat(bobRooms.isNull("chat_rooms")).isTrue();
+    }
+
+    @Test(expected = IncorrectRoomException.class)
+    public void should_fails_to_delete_room_if_not_author() throws Exception {
+        //Given
+        scriptExecutor.executeScript("should_remove_chat_room_with_all_participants.cql");
+
+        //When
+        service.deleteRoomWithParticipants("hsue", "fairy", Sets.newHashSet("jdoe", "hsue", "alice", "bob"));
     }
 }
