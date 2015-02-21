@@ -9,6 +9,7 @@ import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
 
 import com.datastax.driver.core.querybuilder.Delete;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
@@ -32,6 +33,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static info.archinnov.achilles.type.OptionsBuilder.ifEqualCondition;
+import static info.archinnov.achilles.type.OptionsBuilder.ifExists;
 import static java.lang.String.format;
 
 
@@ -86,36 +89,16 @@ public class ChatRoomService {
 
         final String newParticipant = participant.getLogin();
 
-        /**
-         * Specs
-         *
-         *
-         *  - when a participant is joining a chat room, we must add this participant to ChatRoomEntity.participants.
-         *    Use the Achilles update by proxy API as in the createChatRoom() method above.
-         *
-         *  - in order to be concurrency-proof, we should add a new participant only if the room does exist.
-         *    It can be achieved by an UPDATE with a condition on the room name (property 'name') using
-         *    LightWeight Transaction. Ex:
-         *
-         *
-         *      final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, primary_key_of_a_chat_room);
-         *
-         *      ??? Implement code here
-         *
-         *      manager.update(proxy, OptionsBuilder.ifExists());
-         *
-         *  - for documentation on LightWeight Transaction API (optional): https://github.com/doanduyhai/Achilles/wiki/Lightweight-Transaction
-         */
-
-        //Implement the service here
-
         try {
 
-            //Implement the service here
+            final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, roomName);
+            chatRoomProxy.getParticipants().add(participant);
+            manager.update(chatRoomProxy, ifExists());
 
         } catch (AchillesLightWeightTransactionException ex) {
             throw new ChatRoomDoesNotExistException(format("The chat room '%s' does not exist", roomName));
         }
+
 
         // Add chat room to user chat room list too
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, newParticipant);
@@ -125,30 +108,9 @@ public class ChatRoomService {
 
     public void removeUserFromRoom(String roomName, LightUserModel participant) {
         final String participantToBeRemoved = participant.getLogin();
-
-        /**
-         * Specs
-         *
-         *
-         *  - when a participant is leaving a chat room, we must remove this participant from ChatRoomEntity.participants.
-         *    Use the Achilles update by proxy API as in the createChatRoom() method above.
-         *
-         *  - this time we DO NOT NEED to ensure that the chat room still exists. Deleting = creating a tombstone
-         *    in Cassandra so that removing a participant from a non-existing room is idempotent and has no side-effect
-         *
-         *    We could have used LightWeight Transaction for participant removal too but it is un-necessary
-         *
-         *      final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, primary_key_of_a_chat_room);
-         *
-         *      ??? Implement code here
-         *
-         *      manager.update(proxy);
-         *
-         */
-
-
-        //Implement the service here
-
+        final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, roomName);
+        chatRoomProxy.getParticipants().remove(participant);
+        manager.update(chatRoomProxy);
 
         // Remove chat room from user chat room list too
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, participantToBeRemoved);
@@ -158,38 +120,14 @@ public class ChatRoomService {
 
     public String deleteRoomWithParticipants(String creatorLogin, String roomName, Set<String> participants) {
 
-        /**
-         * Specs part 1
-         *
-         *  - we must delete a room if and only if the current user login (parameter creatorLogin) does match
-         *    the 'creator_login' column in the chat_rooms table. Only the creator of a room can delete it.
-         *    For this we'll rely again on LightWeight Transaction
-         *
-         *  - to avoid the read-before-write ANTI-PATTERN (manager.find() followed by manager.delete()), use:
-         *
-         *      manager.deleteById(MyEntity.class, primaryKey, OptionsBuilder.ifEqualCondition(???,???))
-         *
-         */
-
         try {
-
-            //Implement the service here
-
+            manager.deleteById(ChatRoomEntity.class, roomName,ifEqualCondition("creator_login", creatorLogin));
         } catch (AchillesLightWeightTransactionException ex) {
             throw new IncorrectRoomException(ex.getMessage());
         }
 
-
-        /**
-         * Specs part 2
-         *
-         * Delete all chat messages from room
-         *
-         *  - use the manager.nativeQuery(DELETE_ROOM_MESSAGES, boundValues).execute()
-         *
-         *  - the DELETE_ROOM_MESSAGES statement is already given above, just re-use it
-         */
-
+        //Delete all chat messages from room
+        manager.nativeQuery(DELETE_ROOM_MESSAGES, roomName).execute();
 
         // Remove this chat room from the chat room list of ALL current participants using BATCH for automatic retry
         final Batch batch = manager.createBatch();
