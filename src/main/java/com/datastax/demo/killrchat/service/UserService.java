@@ -5,9 +5,13 @@ import javax.inject.Inject;
 
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
+import com.datastax.demo.killrchat.exceptions.UserAlreadyExistsException;
+import com.datastax.demo.killrchat.exceptions.UserNotFoundException;
 import com.datastax.demo.killrchat.model.UserModel;
 import com.datastax.demo.killrchat.security.utils.SecurityUtils;
+import info.archinnov.achilles.exception.AchillesLightWeightTransactionException;
 import info.archinnov.achilles.persistence.PersistenceManager;
+import info.archinnov.achilles.type.OptionsBuilder;
 import org.springframework.stereotype.Service;
 
 import static java.lang.String.format;
@@ -19,38 +23,19 @@ public class UserService {
     PersistenceManager manager;
 
     public void createUser(UserModel model) {
-        /**
-         * Specs
-         *
-         *  - use manager.insert() API
-         *  - to convert a model to an entity, use the helper static method UserEntity.fromModel()
-         *  - use Lightweight Transaction to avoid inserting twice the same user
-         *    - the IF NOT EXISTS clause is defined using OptionsBuilder:
-         *
-         *      manager.insert(???, OptionsBuilder.???());
-         *
-         *  - if insert using Lightweight Transaction fails, Achilles will throw an AchillesLightWeightTransactionException,
-         *    catch it and rethrow an UserAlreadyExistsException
-         *
-         *  Remark
-         *  - for documentation on manager API (optional): https://github.com/doanduyhai/Achilles/wiki/Persistence-Manager-Operations
-         *  - for documentation on LightWeight Transaction API (optional): https://github.com/doanduyhai/Achilles/wiki/Lightweight-Transaction
-         */
+        try {
+            manager.insert(UserEntity.fromModel(model), OptionsBuilder.ifNotExists());
+        } catch (AchillesLightWeightTransactionException ex) {
+            throw new UserAlreadyExistsException(format("The user with the login '%s' already exists", model.getLogin()));
+        }
     }
 
     public UserEntity findByLogin(String login) {
-
-        /**
-         * Specs
-         *
-         *  - use manager.find(???.class, partitionKey)
-         *  - if no user is found, throw an UserNotFoundException
-         *
-         *  Remark
-         *  - for documentation on manager API(optional): https://github.com/doanduyhai/Achilles/wiki/Persistence-Manager-Operations
-         */
-
-        return null;
+        final UserEntity userEntity = manager.find(UserEntity.class, login);
+        if (userEntity == null) {
+            throw new UserNotFoundException(format("Cannot find user with login '%s'", login));
+        }
+        return userEntity;
     }
 
     /**

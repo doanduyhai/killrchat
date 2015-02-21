@@ -99,7 +99,7 @@ public class UserServiceTest {
         //Given
         service.findByLogin("whatever");
     }
-    
+
     @Test(expected = AchillesBeanValidationException.class)
     public void should_exception_if_password_not_set() throws Exception {
         //Given
