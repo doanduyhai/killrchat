@@ -243,19 +243,18 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>com.comphenix.maven</groupId>
-                        <artifactId>yaml-properties-plugin</artifactId>
-                        <version>0.1.0</version>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <version>1.0-alpha-2</version>
                         <executions>
                             <execution>
+                                <phase>initialize</phase>
                                 <goals>
-                                    <goal>read-yaml-properties</goal>
+                                    <goal>read-project-properties</goal>
                                 </goals>
-                                <phase>process-sources</phase>
                                 <configuration>
                                     <files>
-                                        <!-- YAML files that will be loaded. The element name is the file ID. -->
-                                        <application>${basedir}/src/main/resources/config/application.yml</application>
+                                        <file>src/main/resources/config/application.properties</file>
                                     </files>
                                 </configuration>
                             </execution>
@@ -271,9 +270,9 @@
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <target>
-                                        <mkdir dir="${yaml.application.dev.cassandra.folders.data}"/>
-                                        <mkdir dir="${yaml.application.dev.cassandra.folders.commitlog}"/>
-                                        <mkdir dir="${yaml.application.dev.cassandra.folders.saved_caches}"/>
+                                        <mkdir dir="${dev.cassandra.folders.data}"/>
+                                        <mkdir dir="${dev.cassandra.folders.commitlog}"/>
+                                        <mkdir dir="${dev.cassandra.folders.saved_caches}"/>
                                     </target>
                                 </configuration>
                                 <goals>
@@ -309,11 +308,6 @@
         <pluginRepository>
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>comphenix-rep</id>
-            <name>Comphenix Maven Releases</name>
-            <url>http://repo.comphenix.net/content/groups/public</url>
         </pluginRepository>
     </pluginRepositories>
 </project>

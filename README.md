@@ -56,7 +56,7 @@ the following data folders:
 2. `/tmp/killrchat_cassandra/commitlog`
 3. `/tmp/killrchat_cassandra/saved_caches`
 
-You can change those default values in the `src/main/resources/config/application.yml` file.
+You can change those default values in the `src/main/resources/config/application.properties` file.
 
 Then connect to the chat by opening your browser at
 [http://localhost:8080/killrchat/index.html](http://localhost:8080/killrchat/index.html).
@@ -69,7 +69,7 @@ To run the application in the production mode:
     killrchat> mvn spring-boot:run -Pprod
 
 When running the application in prod mode, **Achilles** will connect to an existing Cassandra server. You can
-configure the server host and port in the the `src/main/resources/config/application.yml` file.
+configure the server host and port in the the `src/main/resources/config/application.properties` file.
 By default **Achilles** will execute the `src/main/resources/cassandra/schema_creation.cql` script to create the
 `killrchat` keyspace and appropriate tables.
 
