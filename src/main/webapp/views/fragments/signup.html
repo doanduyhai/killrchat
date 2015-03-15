@@ -1,64 +1,66 @@
 <script type="text/ng-template" id="signUpModal.html">
-    <div class="modal-header">
-        <h3 class="modal-title">Create your KillrChat account</h3>
-    </div>
-    <div class="modal-body">
-        <p class="bg-danger well well-sm" ng-if="user_create_error != null">
-            Error while creating user: {{user_create_error}}
-        </p>
-        <form class="form-horizontal" role="form" name="form">
-            <div class="form-group has-feedback" valid-for="form.login.$valid">
-                <label for="login" class="col-sm-2 control-label">Login</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="login" name="login" placeholder="Login [a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}"
-                           ng-model="user.login" required ng-pattern="/^[a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}$/">
-                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.login.$valid"></span>
+    <div class="container-fluid">
+        <div class="modal-header">
+            <h3 class="modal-title">Create your KillrChat account</h3>
+        </div>
+        <div class="modal-body">
+            <p class="bg-danger well well-sm" ng-if="user_create_error != null">
+                Error while creating user: {{user_create_error}}
+            </p>
+            <form class="form-horizontal" role="form" name="form">
+                <div class="form-group has-feedback" valid-for="form.login.$valid">
+                    <label for="login" class="col-sm-2 control-label">Login</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="login" name="login" placeholder="Login [a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}"
+                               ng-model="user.login" required ng-pattern="/^[a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}$/">
+                        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.login.$valid"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback" valid-for="form.password.$valid">
-                <label for="password" class="col-sm-2 control-label">Password</label>
-                <div class="col-sm-10">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" ng-model="user.password" required>
-                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.password.$valid"></span>
+                <div class="form-group has-feedback" valid-for="form.password.$valid">
+                    <label for="password" class="col-sm-2 control-label">Password</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" ng-model="user.password" required>
+                        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.password.$valid"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback" valid-for="form.confirm_password.$valid">
-                <label for="confirm_password" class="col-sm-2 control-label">Confirm</label>
-                <div class="col-sm-10">
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Password Confirm" password-match="user.password" ng-model="user.passwordConfirm" required>
-                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.confirm_password.$valid"></span>
+                <div class="form-group has-feedback" valid-for="form.confirm_password.$valid">
+                    <label for="confirm_password" class="col-sm-2 control-label">Confirm</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Password Confirm" password-match="user.password" ng-model="user.passwordConfirm" required>
+                        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.confirm_password.$valid"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback" valid-for="form.firstname.$valid">
-                <label for="firstname" class="col-sm-2 control-label">Firstname</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="firstname" name="firstname" placeholder="Firstname" ng-model="user.firstname" required>
-                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.firstname.$valid"></span>
+                <div class="form-group has-feedback" valid-for="form.firstname.$valid">
+                    <label for="firstname" class="col-sm-2 control-label">Firstname</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="firstname" name="firstname" placeholder="Firstname" ng-model="user.firstname" required>
+                        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.firstname.$valid"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback" valid-for="form.lastname.$valid">
-                <label for="lastname" class="col-sm-2 control-label">Lastname</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Lastname" ng-model="user.lastname" required>
-                    <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.lastname.$valid"></span>
+                <div class="form-group has-feedback" valid-for="form.lastname.$valid">
+                    <label for="lastname" class="col-sm-2 control-label">Lastname</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Lastname" ng-model="user.lastname" required>
+                        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true" ng-show="!form.lastname.$valid"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback">
-                <label for="email" class="col-sm-2 control-label">Email</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="email" name="email" placeholder="Email" ng-model="user.email">
+                <div class="form-group has-feedback">
+                    <label for="email" class="col-sm-2 control-label">Email</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="email" name="email" placeholder="Email" ng-model="user.email">
+                    </div>
                 </div>
-            </div>
-            <div class="form-group has-feedback">
-                <label for="bio" class="col-sm-2 control-label">Bio</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="bio" name="bio" placeholder="Bio" ng-model="user.bio">
+                <div class="form-group has-feedback">
+                    <label for="bio" class="col-sm-2 control-label">Bio</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="bio" name="bio" placeholder="Bio" ng-model="user.bio">
+                    </div>
                 </div>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="ok()">OK</button>
-        <button class="btn btn-cancel" ng-click="cancel()">Cancel</button>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" ng-click="ok()">OK</button>
+            <button class="btn btn-cancel" ng-click="cancel()">Cancel</button>
+        </div>
     </div>
 </script>

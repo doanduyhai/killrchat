@@ -139,6 +139,9 @@ killrChat.directive('chatZone', function(usSpinnerService, WebSocketService, Cha
 });
 
 
+/**
+ * Participant Pop-over
+ */
 killrChat.directive('participantPopup', function($rootElement, $filter, $position, User, GeneralNotificationService) {
     return {
         priority: 1,

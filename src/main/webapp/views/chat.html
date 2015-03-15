@@ -1,34 +1,33 @@
-<!--Left Column-->
-<div ng-controller="ChatNavigationCtrl">
+<div ng-controller="ChatNavigationCtrl" class="container-fluid">
 
     <!--Chat Rooms Column-->
-    <div id="chatRoomList" ng-include="'views/fragments/userChatRooms.html'"></div>
+    <div id="chatRoomList" class="sidebar" ng-include="'views/fragments/userChatRooms.html'"></div>
 
     <div ng-switch on="section">
 
         <!--Chat Landing Page-->
         <div ng-switch-when="home">
-            <div id="chatHomePage" class="col-md-10 col-md-offset-2 chat-zone" ng-include="'views/fragments/chatHomePage.html'"></div>
+            <div id="chatHomePage" class="right-column" ng-include="'views/fragments/chatHomePage.html'"></div>
         </div>
 
         <div ng-switch-when="allRooms">
-            <div id="chatRoomsList" class="col-md-10 col-md-offset-2 chat-zone" ng-include="'views/fragments/chatRoomsList.html'"></div>
+            <div id="chatRoomsList" class="right-column" ng-include="'views/fragments/chatRoomsList.html'"></div>
         </div>
 
         <div ng-switch-when="newRoom">
-            <div id="newChatRoomPanel" class="col-md-10 col-md-offset-2 chat-zone" ng-include="'views/fragments/newChatRoom.html'"></div>
+            <div id="newChatRoomPanel" class="right-column" ng-include="'views/fragments/newChatRoom.html'"></div>
         </div>
 
         <!--Inside a chat room-->
-        <div class="col-md-10 col-md-offset-2" ng-switch-when="room">
-            <div class="row">
+        <div ng-switch-when="room" class="middle-column">
                 <!--Chat Main Section-->
                 <chat-zone state="state" user="user" home="home()" get-light-model="getLightModel()"></chat-zone>
 
                 <!--Participants Column-->
-                <div id="chatParticipants" class="col-md-2 sidebar col-md-offset-10"
+                <div id="chatParticipants" class="sidebar-right"
                      ng-include="'views/fragments/chatParticipants.html'"></div>
-            </div>
+            <!--<div class="row container-fluid">-->
+            <!--</div>-->
 
         </div>
     </div>

@@ -16,11 +16,12 @@
         <!-- endbuild -->
     </head>
     <body ng-app="KillrChat">
+    <div class="container-fluid">
         <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NavBarCtrl">
             <div class="navbar-inner" >
                 <div class="container-fluid">
                     <a class="navbar-brand">KillrChat</a>
-                    <ul class="nav navbar-nav">
+                    <ul class="nav navbar-nav hidden-xs hidden-sm">
                         <li><a href="http://cassandra.apache.org/" target="_blank">powered by <strong>Apache Cassandra™</strong></a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right logout" ng-if="user != null" ng-click="logout()">
@@ -37,9 +38,10 @@
                 {{generalMessage}}
             </div>
         </div>
-        <div class="container-fluid">
+        <div>
             <div class="row" ng-view/>
         </div>
+    </div>
         <script src="bower_components/less/less.js"></script>
         <script src="bower_components/angular/angular.js"></script>
         <script src="bower_components/angular-bootstrap/ui-bootstrap.js"></script>

@@ -1,7 +1,7 @@
-<div id="chatMainSection" class="col-md-8 chat-zone">
-    <div class="row chat-room-banner-height">
+<div id="chatMainSection" class="chat-zone">
+    <div class="chat-room-banner-height">
         <div class="row chat-room-banner bg-primary">
-            <div class="col-md-1 chat-room-banner-icon">
+            <div class="col-md-1 chat-room-banner-icon hidden-xs hidden-sm">
                 <i class="fa fa-users fa-3x clickable"
                     popover-placement="bottom"
                     popover-trigger="mouseenter"
@@ -14,18 +14,18 @@
                 <div class="row chat-room-banner-name">
                     <span>{{state.currentRoom.roomName}}</span>
                 </div>
-                <div class="row chat-room-banner-text">
+                <div class="row chat-room-banner-text hidden-xs hidden-sm">
                     <span><em><small>{{state.currentRoom.banner}}</small></em></span>
                 </div>
             </div>
-            <div class="col-md-1 chat-room-banner-remove" ng-if="state.currentRoom.creator.login == user.login">
+            <div class="chat-room-banner-remove" ng-if="state.currentRoom.creator.login == user.login">
                 <i title="Click here to remove the '{{state.currentRoom.roomName}}' room and kick out all participants"
                    class="fa fa-remove fa-2x clickable"
                         ng-click="deleteRoomWithParticipants(state.currentRoom)"></i>
             </div>
         </div>
     </div>
-    <div class="row chat-room-messages-height">
+    <div class="chat-room-messages-height">
         <div id="chat-scroll" class="chat-room-messages">
             <span us-spinner="{radius:30, width:8, length: 16}" spinner-key="loading-spinner"></span>
             <ul class="list-group">
@@ -38,8 +38,8 @@
             </ul>
         </div>
     </div>
-    <div class="row chat-room-separator-height"></div>
-    <div class="row chat-room-input-message well well-lg">
+    <div class="chat-room-separator-height"></div>
+    <div class="chat-room-input-message well well-lg">
         <div class="col-md-12">
             <div class="input-group">
                 <input type="text" class="form-control" name="new_message" placeholder="New message" ng-model="newMessage.content" ng-enter="postMessage()"/>
