@@ -12,10 +12,6 @@ import java.util.Set;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserModel extends LightUserModel {
 
-    @Size(max = 100)
-    @Pattern(regexp="[a-zA-Z0-9][a-zA-Z0-9_.-]{2,30}")
-    protected String nickname;
-
     @NotEmpty
     private String password;
 
@@ -26,14 +22,6 @@ public class UserModel extends LightUserModel {
     private String bio;
 
     private Set<String> chatRooms;
-
-//    public UserModel(String login, String password, String firstname, String lastname, String email, String bio, Set<String> chatRooms) {
-//        super(login, firstname, lastname);
-//        this.password = password;
-//        this.email = email;
-//        this.bio = bio;
-//        this.chatRooms = chatRooms;
-//    }
 
     public UserModel(String login, String password, String firstname, String lastname, String email, String bio) {
         super(login, firstname, lastname);
