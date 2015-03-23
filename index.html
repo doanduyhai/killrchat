@@ -66,11 +66,20 @@ use the <strong><a href="https://github.com/doanduyhai/Achilles/wiki/Unit-testin
 <p>Once all the exercises are done, we can have some fun using the real chat!</p>
 
 <h1>
+<a id="presentation-slides" class="anchor" href="#presentation-slides" aria-hidden="true"><span class="octicon octicon-link"></span></a>Presentation slides</h1>
+
+<p>If you're not familiar with <strong>Cassandra</strong>, please take a look at the <a href="https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Cassandra%20Intro.pdf">introduction slides</a></p>
+
+<p>For a presentation of <strong>KillrChat</strong>, look at the slides <a href="https://raw.github.com/doanduyhai/killrchat/master/KillrChat%20Hands%20On%20-%20Exercises%20Handbook.pdf">here</a></p>
+
+<h1>
 <a id="running-the-application" class="anchor" href="#running-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the application</h1>
 
 <blockquote>
 <p>Warning! You'll need a recent and decent browser (no IE8) to make the chat front-end work:
   IE10, Chrome, FireFox ...</p>
+
+<p>Warning! You should have Maven and Java (1.7+) installed and functionnal, other component will be installed automatically</p>
 </blockquote>
 
 <p>First clone the repository with <code>git clone https://github.com/doanduyhai/killrchat.git</code>
@@ -82,7 +91,7 @@ Then enter the folder <code>cd killrchat</code></p>
 <p>To run the application in the development mode:</p>
 
 <pre><code>killrchat&gt; mvn clean test
-killrchat&gt; mvn spring-boot:run
+killrchat&gt; mvn spring-boot:run -Pdev
 </code></pre>
 
 <p>When running the application in dev mode, <strong>Achilles</strong> will start an embedded Cassandra server and create
@@ -94,7 +103,7 @@ the following data folders:</p>
 <li><code>/tmp/killrchat_cassandra/saved_caches</code></li>
 </ol>
 
-<p>You can change those default values in the <code>src/main/resources/config/application.yml</code> file.</p>
+<p>You can change those default values in the <code>src/main/resources/config/application.properties</code> file.</p>
 
 <p>Then connect to the chat by opening your browser at
 <a href="http://localhost:8080/killrchat/index.html">http://localhost:8080/killrchat/index.html</a>.</p>
@@ -109,7 +118,7 @@ killrchat&gt; mvn spring-boot:run -Pprod
 </code></pre>
 
 <p>When running the application in prod mode, <strong>Achilles</strong> will connect to an existing Cassandra server. You can
-configure the server host and port in the the <code>src/main/resources/config/application.yml</code> file.
+configure the server host and port in the the <code>src/main/resources/config/application.properties</code> file.
 By default <strong>Achilles</strong> will execute the <code>src/main/resources/cassandra/schema_creation.cql</code> script to create the
 <code>killrchat</code> keyspace and appropriate tables.</p>
 
@@ -162,7 +171,7 @@ this hands-on.</p>
 <p>Alternatively, we can use the <strong><a href="http://www.datastax.com/dev/blog/datetieredcompactionstrategy">DateTieredCompactionStrategy</a></strong> to make reading recent messages faster.</p>
       </section>
       <footer>
-        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
       </footer>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
