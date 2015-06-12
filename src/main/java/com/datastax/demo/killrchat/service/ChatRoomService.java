@@ -48,7 +48,6 @@ public class ChatRoomService {
     public static final String DELETION_MESSAGE = "The room '%s' has been removed by '%s'";
 
     private static final Function<ChatRoomEntity, ChatRoomModel> CHAT_ROOM_TO_MODEL = new Function<ChatRoomEntity, ChatRoomModel>() {
-        @Override
         public ChatRoomModel apply(ChatRoomEntity entity) {
             return entity.toModel();
         }
@@ -68,7 +67,7 @@ public class ChatRoomService {
             throw new ChatRoomAlreadyExistsException(format("The room '%s' already exists", roomName));
         }
 
-        final Batch batch = manager.createBatch();
+        final Batch batch = manager.createLoggedBatch();
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, creatorLogin);
         userProxy.getChatRooms().add(roomName);
         batch.update(userProxy);
@@ -101,7 +100,7 @@ public class ChatRoomService {
         }
 
         // Add chat room to user chat room list too
-        final Batch batch = manager.createBatch();
+        final Batch batch = manager.createLoggedBatch();
         final UserEntity userProxy = manager.forUpdate(UserEntity.class, newParticipant);
         userProxy.getChatRooms().add(roomName);
         batch.update(userProxy);
@@ -109,7 +108,7 @@ public class ChatRoomService {
     }
 
     public void removeUserFromRoom(String roomName, LightUserModel participant) {
-        final Batch batch = manager.createBatch();
+        final Batch batch = manager.createLoggedBatch();
 
         final String participantToBeRemoved = participant.getLogin();
         final ChatRoomEntity chatRoomProxy = manager.forUpdate(ChatRoomEntity.class, roomName);
@@ -132,12 +131,12 @@ public class ChatRoomService {
         }
 
         // Delete all chat messages from room
-        final Batch chatMessageBatch = manager.createBatch();
+        final Batch chatMessageBatch = manager.createLoggedBatch();
         chatMessageBatch.batchNativeStatement(DELETE_ROOM_MESSAGES, roomName);
         chatMessageBatch.endBatch();
 
         // Remove this chat room from the chat room list of ALL current participants using BATCH for automatic retry
-        final Batch batch = manager.createBatch();
+        final Batch batch = manager.createLoggedBatch();
 
         for (String participantLogin : participants) {
             final UserEntity proxy = manager.forUpdate(UserEntity.class, participantLogin);

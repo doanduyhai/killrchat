@@ -3,6 +3,7 @@ package com.datastax.demo.killrchat.configuration;
 import com.datastax.demo.killrchat.entity.Schema;
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import info.archinnov.achilles.listener.LWTResultListener;
 import info.archinnov.achilles.persistence.PersistenceManager;
 import info.archinnov.achilles.persistence.PersistenceManagerFactory;
