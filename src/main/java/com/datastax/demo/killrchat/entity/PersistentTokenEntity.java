@@ -1,27 +1,27 @@
 package com.datastax.demo.killrchat.entity;
 
 import com.datastax.demo.killrchat.security.authority.UserAuthority;
-import com.datastax.demo.killrchat.security.utils.JodaTimeToDateCodec;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Frozen;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import info.archinnov.achilles.annotations.*;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 
-@Entity(keyspace = Schema.KEYSPACE, table = Schema.PERSISTENT_TOKEN)
+@Table(keyspace = Schema.KEYSPACE, name = Schema.PERSISTENT_TOKEN)
 public class PersistentTokenEntity implements Serializable {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("YYYY-MM-dd");
+    private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("YYYY-MM-dd");
 
     private static final int MAX_USER_AGENT_LEN = 255;
 
@@ -35,8 +35,7 @@ public class PersistentTokenEntity implements Serializable {
 
     @JsonIgnore
     @Column(name = "token_date")
-    @TypeTransformer(valueCodecClass = JodaTimeToDateCodec.class)
-    private DateTime tokenDate;
+    private Date tokenDate;
 
     //an IPV6 address max length is 39 characters
     @Size(min = 0, max = 39)
@@ -52,9 +51,9 @@ public class PersistentTokenEntity implements Serializable {
     @Column
     private String pass;
 
-    @JSON
     @Column
-    private Set<UserAuthority> authorities;
+    @Frozen("set<frozen<user_authority>>")
+    private Set<UserAuthority> authorities = new HashSet<>();
 
     public String getSeries() {
         return series;
@@ -72,17 +71,17 @@ public class PersistentTokenEntity implements Serializable {
         this.tokenValue = tokenValue;
     }
 
-    public DateTime getTokenDate() {
+    public Date getTokenDate() {
         return tokenDate;
     }
 
-    public void setTokenDate(DateTime tokenDate) {
+    public void setTokenDate(Date tokenDate) {
         this.tokenDate = tokenDate;
     }
 
     @JsonGetter
     public String getFormattedTokenDate() {
-        return DATE_TIME_FORMATTER.print(this.tokenDate);
+        return DATE_TIME_FORMATTER.format(this.tokenDate);
     }
 
     public String getIpAddress() {

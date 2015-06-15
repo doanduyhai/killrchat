@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Date;
 
 import static com.datastax.demo.killrchat.security.repository.PersistentTokenRepository.TOKEN_VALIDITY_SECONDS;
 
@@ -84,10 +85,7 @@ public class CustomPersistentRememberMeService extends
 
         // Token also matches, so login is valid. Update the token value, keeping the *same* series number.
         log.debug("Refreshing persistent login token for user '{}', series '{}'", login, token.getSeries());
-//        token.setTokenDate(new DateTime());
         token.setTokenValue(generateTokenData());
-//        token.setIpAddress(request.getRemoteAddr());
-//        token.setUserAgent(request.getHeader("User-Agent"));
         persistentTokenRepository.update(token);
         addCookie(token, request, response);
 
@@ -107,7 +105,7 @@ public class CustomPersistentRememberMeService extends
         token.setPass(user.getPassword());
         token.setAuthorities(user.getUserAuthorities());
         token.setTokenValue(generateTokenData());
-        token.setTokenDate(new DateTime());
+        token.setTokenDate(new Date());
         token.setIpAddress(request.getRemoteAddr());
         token.setUserAgent(request.getHeader("User-Agent"));
         persistentTokenRepository.insert(token);

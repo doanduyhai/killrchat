@@ -26,7 +26,7 @@ public class CassandraConfiguration {
 
     @Profile(Profiles.SPRING_PROFILE_DEVELOPMENT)
     @Bean(destroyMethod = "close")
-    public Cluster cassandraNativeClusterDev() {
+    public Session cassandraNativeClusterDev() {
         final Cluster cluster = CassandraEmbeddedServerBuilder
                 .noEntityPackages()
                 .cleanDataFilesAtStartup(false)
@@ -40,14 +40,16 @@ public class CassandraConfiguration {
         logger.info("Create keyspace "+Schema.KEYSPACE+" if necessary ");
         String keyspaceCreation = "CREATE KEYSPACE IF NOT EXISTS "+Schema.KEYSPACE+" WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}";
 
-        cluster.connect().execute(keyspaceCreation);
+        final Session session = cluster.connect();
+        maybeCreateSchema(session);
+        session.execute(keyspaceCreation);
 
-        return cluster;
+        return session;
     }
 
     @Profile(Profiles.SPRING_PROFILE_PRODUCTION)
     @Bean(destroyMethod = "close")
-    public Cluster cassandraNativeClusterProduction() {
+    public Session cassandraNativeClusterProduction() {
 
         Cluster cluster = Cluster.builder()
                 .addContactPoints(env.getProperty("cassandra.host"))
@@ -55,16 +57,17 @@ public class CassandraConfiguration {
                 .withClusterName(CLUSTER_NAME)
                 .build();
 
-        maybeCreateSchema(cluster);
+        final Session session = cluster.connect();
 
-        return cluster;
+        maybeCreateSchema(session);
+
+        return session;
     }
 
-    private void maybeCreateSchema(Cluster cluster) {
+    private void maybeCreateSchema(Session session) {
         logger.info("Execute schema creation script 'cassandra/schema_creation.cql' if necessary");
-        final Session session = cluster.connect();
         final ScriptExecutor scriptExecutor = new ScriptExecutor(session);
         scriptExecutor.executeScript("cassandra/schema_creation.cql");
-        session.close();
+
     }
 }

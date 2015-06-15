@@ -3,8 +3,11 @@ package com.datastax.demo.killrchat.entity;
 import com.datastax.demo.killrchat.model.MessageModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
 import com.datastax.driver.core.utils.UUIDs;
-import info.archinnov.achilles.annotations.*;
-import info.archinnov.achilles.type.NamingStrategy;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Frozen;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
@@ -14,35 +17,42 @@ import java.util.UUID;
 import static com.datastax.demo.killrchat.entity.Schema.CHATROOM_MESSAGES;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 
-@Entity(keyspace = KEYSPACE, table = CHATROOM_MESSAGES)
-@Strategy(naming = NamingStrategy.SNAKE_CASE)
+
+@Table(keyspace = KEYSPACE, name = CHATROOM_MESSAGES)
 public class MessageEntity {
 
-    @CompoundPrimaryKey
-    private CompoundPk primaryKey;
+    @PartitionKey
+    @Column(name = "room_name")
+    private String roomName;
+
+    @ClusteringColumn
+    @Column(name = "message_id")
+    private UUID messageId;
 
     @NotNull
-    @JSON
     @Column
+    @Frozen
     private LightUserModel author;
 
     @NotEmpty
     @Column
     private String content;
 
-    @Column
+    @Column(name = "system_message")
     private boolean systemMessage;
 
 
     public MessageEntity(String roomName, UUID messageId, LightUserModel author, String content) {
-        this.primaryKey = new CompoundPk(roomName, messageId);
+        this.roomName = roomName;
+        this.messageId = messageId;
         this.author = author;
         this.content = content;
         this.systemMessage = false;
     }
 
     public MessageEntity(String roomName, UUID messageId, LightUserModel author, String content, boolean systemMessage) {
-        this.primaryKey = new CompoundPk(roomName, messageId);
+        this.roomName = roomName;
+        this.messageId = messageId;
         this.author = author;
         this.content = content;
         this.systemMessage = systemMessage;
@@ -58,56 +68,7 @@ public class MessageEntity {
         return model;
     }
 
-    public static class CompoundPk {
 
-        @PartitionKey
-        private String roomName;
-
-        @ClusteringColumn(value = 1, reversed = true)
-        @TimeUUID
-        private UUID messageId;
-
-        public CompoundPk(String roomName, UUID messageId) {
-            this.roomName = roomName;
-            this.messageId = messageId;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /**
-         *
-         * Boring getters & setters & default constructor
-         *
-         */
-        public CompoundPk() {
-        }
-
-        public String getRoomName() {
-            return roomName;
-        }
-
-        public void setRoomName(String roomName) {
-            this.roomName = roomName;
-        }
-
-        public UUID getMessageId() {
-            return messageId;
-        }
-
-        public void setMessageId(UUID messageId) {
-            this.messageId = messageId;
-        }
-    }
 
 
 
@@ -133,19 +94,19 @@ public class MessageEntity {
     }
 
     public String getRoomName() {
-        return primaryKey.roomName;
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
     }
 
     public UUID getMessageId() {
-        return primaryKey.messageId;
+        return messageId;
     }
 
-    public CompoundPk getPrimaryKey() {
-        return primaryKey;
-    }
-
-    public void setPrimaryKey(CompoundPk primaryKey) {
-        this.primaryKey = primaryKey;
+    public void setMessageId(UUID messageId) {
+        this.messageId = messageId;
     }
 
     public LightUserModel getAuthor() {

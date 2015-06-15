@@ -3,6 +3,7 @@ package com.datastax.demo.killrchat.service;
 import static com.datastax.demo.killrchat.entity.Schema.*;
 import static com.datastax.demo.killrchat.service.ChatRoomService.DELETION_MESSAGE;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.google.common.collect.FluentIterable.from;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.*;
 
@@ -12,9 +13,13 @@ import com.datastax.demo.killrchat.exceptions.ChatRoomDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.IncorrectRoomException;
 import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
+import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import info.archinnov.achilles.junit.AchillesResource;
 import info.archinnov.achilles.junit.AchillesResourceBuilder;
@@ -28,35 +33,32 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChatRoomServiceTest {
 
     @Rule
     public AchillesResource resource = AchillesResourceBuilder
-            .withEntityPackages(UserEntity.class.getPackage().getName())
-            .withKeyspaceName(KEYSPACE)
-            .withBeanValidation()
+            .noEntityPackages(KEYSPACE)
+            .withScript("cassandra/schema_creation.cql")
             .tablesToTruncate(USERS, CHATROOMS)
             .truncateBeforeAndAfterTest().build();
+    @Rule
+    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
 
     private Session session = resource.getNativeSession();
-
     private ScriptExecutor scriptExecutor = resource.getScriptExecutor();
-
+    private CassandraRepository repository = rule.getRepository();
     private ChatRoomService service = new ChatRoomService();
 
     private LightUserModel john = new LightUserModel("jdoe", "John", "DOE");
     private LightUserModel helen = new LightUserModel("hsue", "Helen", "SUE");
 
-    private String johnAsJson;
-    private String helenAsJson;
-
     @Before
     public void setUp() throws IOException {
-        service.manager = resource.getPersistenceManager();
-        johnAsJson = service.manager.serializeToJSON(john);
-        helenAsJson = service.manager.serializeToJSON(helen);
+        service.session = session;
+        service.repository = repository;
     }
 
     @Test
@@ -74,7 +76,9 @@ public class ChatRoomServiceTest {
         assertThat(chatRoom).isNotNull();
         assertThat(chatRoom.getString("room_name")).isEqualTo(roomName);
         assertThat(chatRoom.getString("banner")).isEqualTo("banner");
-        assertThat(chatRoom.getSet("participants", String.class)).contains(johnAsJson);
+        final Set<LightUserModel> participants = from(chatRoom.getSet("participants", UDTValue.class))
+                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+        assertThat(participants).contains(john);
 
         assertThat(jdoeChatRooms.getSet("chat_rooms", String.class)).hasSize(1).containsExactly(roomName);
     }
@@ -138,7 +142,10 @@ public class ChatRoomServiceTest {
         final Row participantsRow = session.execute(participants).one();
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
 
-        assertThat(participantsRow.getSet("participants",String.class)).containsOnly(johnAsJson, helenAsJson);
+        final Set<LightUserModel> participantModels = from(participantsRow.getSet("participants", UDTValue.class))
+                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+
+        assertThat(participantModels).containsOnly(john, helen);
         assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(1).containsExactly("politics");
     }
 
@@ -163,7 +170,9 @@ public class ChatRoomServiceTest {
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
 
         assertThat(participantsRow).isNotNull();
-        assertThat(participantsRow.getSet("participants", String.class)).containsOnly(johnAsJson);
+        final Set<LightUserModel> participantModels = from(participantsRow.getSet("participants", UDTValue.class))
+                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+        assertThat(participantModels).containsOnly(john);
 
         assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(0);
     }

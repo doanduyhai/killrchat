@@ -2,42 +2,45 @@ package com.datastax.demo.killrchat.entity;
 
 import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
-import info.archinnov.achilles.annotations.*;
-import info.archinnov.achilles.type.NamingStrategy;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Frozen;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+
 
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.datastax.demo.killrchat.entity.Schema.CHATROOMS;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 
-@Entity(keyspace = KEYSPACE, table = CHATROOMS)
-@Strategy(naming = NamingStrategy.SNAKE_CASE)
+@Table(keyspace = KEYSPACE, name = CHATROOMS)
 public class ChatRoomEntity {
 
     @PartitionKey
+    @Column(name = "room_name")
     private String roomName;
 
     @Column
     @NotNull
-    @JSON
+    @Frozen
     private LightUserModel creator;
 
-    @Column
+    @Column(name = "creator_login")
     private String creatorLogin;
 
     @NotNull
-    @Column
+    @Column(name = "creation_date")
     private Date creationDate;
 
     @Column
     private String banner;
 
     @Column
-    @EmptyCollectionIfNull
-    @JSON
-    private Set<LightUserModel> participants;
+    @Frozen("set<frozen<user>>")
+    private Set<LightUserModel> participants = new HashSet<>();
 
 
     public ChatRoomEntity(String roomName, LightUserModel creator, Date creationDate, String banner, Set<LightUserModel> participants) {

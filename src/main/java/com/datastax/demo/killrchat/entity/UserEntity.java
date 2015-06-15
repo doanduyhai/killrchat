@@ -3,18 +3,19 @@ package com.datastax.demo.killrchat.entity;
 import com.datastax.demo.killrchat.model.UserModel;
 import com.datastax.demo.killrchat.security.authority.CustomUserDetails;
 import com.datastax.demo.killrchat.security.authority.UserAuthority;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.collect.Sets;
-import info.archinnov.achilles.annotations.*;
-import info.archinnov.achilles.type.NamingStrategy;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.USERS;
 
-@Entity(keyspace = KEYSPACE, table = USERS, comment = "users table")
-@Strategy(naming = NamingStrategy.SNAKE_CASE)
+@Table(keyspace = KEYSPACE, name = USERS)
 public class UserEntity {
 
     @PartitionKey
@@ -36,9 +37,8 @@ public class UserEntity {
     @Column
     private String bio;
 
-    @EmptyCollectionIfNull
-    @Column
-    private Set<String> chatRooms;
+    @Column(name = "chat_rooms")
+    private Set<String> chatRooms = new HashSet<>();
 
     public UserEntity(String login, String pass, String firstname, String lastname, String email, String bio) {
         this.login = login;
@@ -48,18 +48,6 @@ public class UserEntity {
         this.email = email;
         this.bio = bio;
     }
-
-    public static UserEntity fromModel(UserModel model) {
-        final UserEntity userEntity = new UserEntity();
-        userEntity.setLogin(model.getLogin());
-        userEntity.setPass(model.getPassword());
-        userEntity.setFirstname(model.getFirstname());
-        userEntity.setLastname(model.getLastname());
-        userEntity.setEmail(model.getEmail());
-        userEntity.setBio(model.getBio());
-        return userEntity;
-    }
-
 
     public UserModel toModel() {
         final UserModel model = new UserModel();

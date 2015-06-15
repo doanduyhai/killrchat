@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.model.MessageModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
+import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -41,28 +42,24 @@ public class MessageServiceTest {
 
     @Rule
     public AchillesResource resource = AchillesResourceBuilder
-            .withEntityPackages(UserEntity.class.getPackage().getName())
-            .withKeyspaceName(KEYSPACE)
-            .withBeanValidation()
+            .noEntityPackages(KEYSPACE)
+            .withScript("cassandra/schema_creation.cql")
             .tablesToTruncate(CHATROOM_MESSAGES)
             .truncateBeforeAndAfterTest().build();
-
-    private PersistenceManager manager = resource.getPersistenceManager();
+    @Rule
+    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
 
     private Session session = resource.getNativeSession();
-
+    private CassandraRepository repository = rule.getRepository();
     private MessageService service = new MessageService();
 
     private LightUserModel johnDoe = new LightUserModel("jdoe","John","DOE");
     private LightUserModel helenSue = new LightUserModel("hsue","Helen","SUE");
-    private String johnAsJson;
-    private String helenAsJson;
 
     @Before
     public void setUp() throws IOException {
-        service.manager = this.manager;
-        johnAsJson = service.manager.serializeToJSON(johnDoe);
-        helenAsJson = manager.serializeToJSON(helenSue);
+        service.session = session;
+        service.repository = repository;
     }
 
     @Test
@@ -83,7 +80,7 @@ public class MessageServiceTest {
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(lastMessage.getString("author")).contains(johnAsJson);
+        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author"))).isEqualTo(johnDoe);
         assertThat(lastMessage.getString("content")).isEqualTo(messageContent);
         assertThat(lastMessage.getBool("system_message")).isFalse();
     }
@@ -113,11 +110,11 @@ public class MessageServiceTest {
 
         final PreparedStatement preparedStatement = session.prepare(createMessage);
 
-        session.execute(preparedStatement.bind(roomName, messageId1, johnAsJson, message1, false));
-        session.execute(preparedStatement.bind(roomName, messageId2, helenAsJson, message2, false));
-        session.execute(preparedStatement.bind(roomName, messageId3, johnAsJson, message3, false));
-        session.execute(preparedStatement.bind(roomName, messageId4, helenAsJson, message4, false));
-        session.execute(preparedStatement.bind(roomName, messageId5, johnAsJson, message5, false));
+        session.execute(preparedStatement.bind(roomName, messageId1, repository.userUdtMapper.toUDT(johnDoe), message1, false));
+        session.execute(preparedStatement.bind(roomName, messageId2, repository.userUdtMapper.toUDT(helenSue), message2, false));
+        session.execute(preparedStatement.bind(roomName, messageId3, repository.userUdtMapper.toUDT(johnDoe), message3, false));
+        session.execute(preparedStatement.bind(roomName, messageId4, repository.userUdtMapper.toUDT(helenSue), message4, false));
+        session.execute(preparedStatement.bind(roomName, messageId5, repository.userUdtMapper.toUDT(johnDoe), message5, false));
 
         //When
         final List<MessageModel> messages = service.fetchNextMessagesForRoom(roomName, UUIDs.timeBased(), 2);
@@ -161,11 +158,11 @@ public class MessageServiceTest {
 
         final PreparedStatement preparedStatement = session.prepare(createMessage);
 
-        session.execute(preparedStatement.bind(roomName, messageId1, johnAsJson, message1, false));
-        session.execute(preparedStatement.bind(roomName, messageId2, helenAsJson, message2, false));
-        session.execute(preparedStatement.bind(roomName, messageId3, johnAsJson, message3, false));
-        session.execute(preparedStatement.bind(roomName, messageId4, helenAsJson, message4, false));
-        session.execute(preparedStatement.bind(roomName, messageId5, johnAsJson, message5, false));
+        session.execute(preparedStatement.bind(roomName, messageId1, repository.userUdtMapper.toUDT(johnDoe), message1, false));
+        session.execute(preparedStatement.bind(roomName, messageId2, repository.userUdtMapper.toUDT(helenSue), message2, false));
+        session.execute(preparedStatement.bind(roomName, messageId3, repository.userUdtMapper.toUDT(johnDoe), message3, false));
+        session.execute(preparedStatement.bind(roomName, messageId4, repository.userUdtMapper.toUDT(helenSue), message4, false));
+        session.execute(preparedStatement.bind(roomName, messageId5, repository.userUdtMapper.toUDT(johnDoe), message5, false));
 
         //When
         final List<MessageModel> messages = service.fetchNextMessagesForRoom(roomName, messageId4, 2);
@@ -200,7 +197,7 @@ public class MessageServiceTest {
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(lastMessage.getString("author")).contains(KILLRCHAT_LOGIN);
+        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author")).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
         assertThat(lastMessage.getString("content")).isEqualTo(format(JOINING_MESSAGE, "John DOE"));
         assertThat(lastMessage.getBool("system_message")).isTrue();
     }
@@ -220,7 +217,7 @@ public class MessageServiceTest {
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(lastMessage.getString("author")).contains(KILLRCHAT_LOGIN);
+        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author")).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
         assertThat(lastMessage.getString("content")).isEqualTo(format(LEAVING_MESSAGE, "John DOE"));
         assertThat(lastMessage.getBool("system_message")).isTrue();
     }

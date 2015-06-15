@@ -1,5 +1,8 @@
 package com.datastax.demo.killrchat.model;
 
+import com.datastax.demo.killrchat.entity.Schema;
+import com.datastax.driver.mapping.annotations.Frozen;
+import com.datastax.driver.mapping.annotations.UDT;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -8,6 +11,7 @@ import javax.validation.constraints.Size;
 import java.beans.Transient;
 import java.util.Objects;
 
+@UDT(keyspace = Schema.KEYSPACE, name = Schema.USER_UDT)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LightUserModel {
 

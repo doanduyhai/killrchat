@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.UserAlreadyExistsException;
 import com.datastax.demo.killrchat.model.UserModel;
+import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import info.archinnov.achilles.exception.AchillesBeanValidationException;
 import info.archinnov.achilles.script.ScriptExecutor;
 import org.junit.Before;
@@ -32,21 +33,23 @@ public class UserServiceTest {
 
     @Rule
     public AchillesResource resource = AchillesResourceBuilder
-            .withEntityPackages(UserEntity.class.getPackage().getName())
-            .withKeyspaceName(KEYSPACE)
-            .withBeanValidation()
+            .noEntityPackages(KEYSPACE)
+            .withScript("cassandra/schema_creation.cql")
             .tablesToTruncate(USERS)
             .truncateBeforeAndAfterTest().build();
+    @Rule
+    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
 
     private Session session = resource.getNativeSession();
-
+    private CassandraRepository repository = rule.getRepository();
     private ScriptExecutor scriptExecutor = resource.getScriptExecutor();
 
     private UserService service = new UserService();
 
     @Before
     public void setUp() {
-        service.manager = resource.getPersistenceManager();
+        service.session = session;
+        service.repository = repository;
     }
 
     @Test
@@ -91,17 +94,6 @@ public class UserServiceTest {
 
         //When
         service.createUser(model);
-    }
-
-    @Test(expected = AchillesBeanValidationException.class)
-    public void should_exception_if_password_not_set() throws Exception {
-        //Given
-        final UserModel model = new UserModel("emc2", "", "Albert", "EINSTEIN", "a.einstein@smart.com", "I am THE Genius");
-
-        //When
-        service.createUser(model);
-
-        //Then
     }
 
     @Test
