@@ -1,18 +1,23 @@
 package com.datastax.demo.killrchat.service;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.USERS;
+import static info.archinnov.achilles.embedded.CassandraEmbeddedConfigParameters.DEFAULT_KEYSPACE_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.UserAlreadyExistsException;
 import com.datastax.demo.killrchat.model.UserModel;
-import com.datastax.demo.killrchat.security.repository.CassandraRepository;
-import info.archinnov.achilles.exception.AchillesBeanValidationException;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import info.archinnov.achilles.generated.ManagerFactory;
+import info.archinnov.achilles.generated.ManagerFactoryBuilder;
+import info.archinnov.achilles.junit.AchillesTestResource;
+import info.archinnov.achilles.junit.AchillesTestResourceBuilder;
 import info.archinnov.achilles.script.ScriptExecutor;
+
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,8 +25,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.demo.killrchat.entity.UserEntity;
-import info.archinnov.achilles.junit.AchillesResource;
-import info.archinnov.achilles.junit.AchillesResourceBuilder;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,25 +36,22 @@ import java.util.Collection;
 public class UserServiceTest {
 
     @Rule
-    public AchillesResource resource = AchillesResourceBuilder
-            .noEntityPackages(KEYSPACE)
-            .withScript("cassandra/schema_creation.cql")
-            .tablesToTruncate(USERS)
-            .truncateBeforeAndAfterTest().build();
-    @Rule
-    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
+    public  AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
+            .forJunit()
+            .withKeyspace(KEYSPACE)
+//            .withScript("cassandra/schema_creation.cql")
+            .tablesToTruncate(UserEntity.class)
+            .truncateBeforeAndAfterTest()
+            .build(cluster -> ManagerFactoryBuilder
+                    .builder(cluster)
+                    .doForceSchemaCreation(true)
+                    .withDefaultKeyspaceName(KEYSPACE)
+                    .build());
 
     private Session session = resource.getNativeSession();
-    private CassandraRepository repository = rule.getRepository();
     private ScriptExecutor scriptExecutor = resource.getScriptExecutor();
 
-    private UserService service = new UserService();
-
-    @Before
-    public void setUp() {
-        service.session = session;
-        service.repository = repository;
-    }
+    private UserService service = new UserService(resource.getManagerFactory().forUserEntity());
 
     @Test
     public void should_create_user() throws Exception {
@@ -61,7 +62,8 @@ public class UserServiceTest {
         service.createUser(model);
 
         //Then
-        final Row row = session.execute(select().from(USERS).where(eq("login", "emc2"))).one();
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+        final Row row = session.execute(builder.select().from(USERS).where(eq("login", "emc2"))).one();
 
         assertThat(row).isNotNull();
         assertThat(row.getString("login")).isEqualTo("emc2");

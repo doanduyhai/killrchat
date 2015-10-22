@@ -1,30 +1,29 @@
 package com.datastax.demo.killrchat.model;
 
 import com.datastax.demo.killrchat.entity.Schema;
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.UDT;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import info.archinnov.achilles.annotations.Column;
+import info.archinnov.achilles.annotations.UDT;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Size;
-import java.beans.Transient;
 import java.util.Objects;
 
 @UDT(keyspace = Schema.KEYSPACE, name = Schema.USER_UDT)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class LightUserModel {
 
     @NotEmpty
     @Size(min = 3, max = 20)
+    @Column
     protected String login;
 
     @NotEmpty
     @Size(max = 100)
+    @Column
     protected String firstname;
 
     @NotEmpty
     @Size(max = 100)
+    @Column
     protected String lastname;
 
 
@@ -34,8 +33,6 @@ public class LightUserModel {
         this.lastname = lastname;
     }
 
-    @Transient
-    @JsonIgnore
     public String getFormattedName() {
         return this.firstname+" "+this.lastname;
     }

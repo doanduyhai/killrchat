@@ -3,10 +3,12 @@ package com.datastax.demo.killrchat.entity;
 import com.datastax.demo.killrchat.model.UserModel;
 import com.datastax.demo.killrchat.security.authority.CustomUserDetails;
 import com.datastax.demo.killrchat.security.authority.UserAuthority;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.collect.Sets;
+
+import info.archinnov.achilles.annotations.Column;
+import info.archinnov.achilles.annotations.EmptyCollectionIfNull;
+import info.archinnov.achilles.annotations.Entity;
+import info.archinnov.achilles.annotations.PartitionKey;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.HashSet;
@@ -15,7 +17,7 @@ import java.util.Set;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.USERS;
 
-@Table(keyspace = KEYSPACE, name = USERS)
+@Entity(keyspace = KEYSPACE, table = USERS)
 public class UserEntity {
 
     @PartitionKey
@@ -37,7 +39,8 @@ public class UserEntity {
     @Column
     private String bio;
 
-    @Column(name = "chat_rooms")
+    @EmptyCollectionIfNull
+    @Column("chat_rooms")
     private Set<String> chatRooms = new HashSet<>();
 
     public UserEntity(String login, String pass, String firstname, String lastname, String email, String bio) {
@@ -47,6 +50,10 @@ public class UserEntity {
         this.lastname = lastname;
         this.email = email;
         this.bio = bio;
+    }
+
+    public static UserEntity fromModel(UserModel model) {
+        return new UserEntity(model.getLogin(), model.getPassword(), model.getFirstname(), model.getLastname(), model.getEmail(), model.getBio());
     }
 
     public UserModel toModel() {
@@ -108,6 +115,7 @@ public class UserEntity {
     public String getEmail() {
         return email;
     }
+
 
     public void setEmail(String email) {
         this.email = email;

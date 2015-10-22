@@ -1,12 +1,9 @@
 package com.datastax.demo.killrchat.entity;
 
 import com.datastax.demo.killrchat.security.authority.UserAuthority;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import info.archinnov.achilles.annotations.*;
 
 
 import javax.validation.constraints.NotNull;
@@ -17,9 +14,16 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
+import static com.datastax.demo.killrchat.entity.Schema.PERSISTENT_TOKEN;
 
-@Table(keyspace = Schema.KEYSPACE, name = Schema.PERSISTENT_TOKEN)
+
+@Entity(keyspace = KEYSPACE, table = PERSISTENT_TOKEN)
+@TTL(value = PersistentTokenEntity.TOKEN_VALIDITY_SECONDS)
 public class PersistentTokenEntity implements Serializable {
+
+    public static final int TOKEN_VALIDITY_DAYS = 31;
+    public static final int TOKEN_VALIDITY_SECONDS = 60 * 60 * 24 * TOKEN_VALIDITY_DAYS;
 
     private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("YYYY-MM-dd");
 
@@ -30,19 +34,19 @@ public class PersistentTokenEntity implements Serializable {
 
     @JsonIgnore
     @NotNull
-    @Column(name = "token_value")
+    @Column("token_value")
     private String tokenValue;
 
     @JsonIgnore
-    @Column(name = "token_date")
+    @Column("token_date")
     private Date tokenDate;
 
     //an IPV6 address max length is 39 characters
     @Size(min = 0, max = 39)
-    @Column(name = "ip_address")
+    @Column("ip_address")
     private String ipAddress;
 
-    @Column(name = "user_agent")
+    @Column("user_agent")
     private String userAgent;
 
     @Column
@@ -51,9 +55,23 @@ public class PersistentTokenEntity implements Serializable {
     @Column
     private String pass;
 
+    @EmptyCollectionIfNull
     @Column
-    @Frozen("set<frozen<user_authority>>")
-    private Set<UserAuthority> authorities = new HashSet<>();
+    private Set<@Frozen UserAuthority> authorities = new HashSet<>();
+
+    public PersistentTokenEntity() {
+    }
+
+    public PersistentTokenEntity(String series, String tokenValue, Date tokenDate, String ipAddress, String userAgent, String login, String pass, @EmptyCollectionIfNull Set<@Frozen UserAuthority> authorities) {
+        this.series = series;
+        this.tokenValue = tokenValue;
+        this.tokenDate = tokenDate;
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
+        this.login = login;
+        this.pass = pass;
+        this.authorities = authorities;
+    }
 
     public String getSeries() {
         return series;

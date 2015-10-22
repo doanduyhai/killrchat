@@ -1,16 +1,17 @@
 package com.datastax.demo.killrchat.security.authority;
 
-import com.datastax.demo.killrchat.entity.Schema;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Field;
-import com.datastax.driver.mapping.annotations.UDT;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import info.archinnov.achilles.annotations.Column;
+import info.archinnov.achilles.annotations.UDT;
 import org.springframework.security.core.GrantedAuthority;
 
-@UDT(keyspace = Schema.KEYSPACE, name = Schema.USER_AUTHORITY_UDT)
+import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
+import static com.datastax.demo.killrchat.entity.Schema.USER_AUTHORITY_UDT;
+
+@UDT(keyspace = KEYSPACE, name = USER_AUTHORITY_UDT)
 @JsonTypeInfo(use= JsonTypeInfo.Id.CLASS, include= JsonTypeInfo.As.PROPERTY, property="@class")
 public class UserAuthority implements GrantedAuthority {
-    @Field
+    @Column
     private String authority = AuthoritiesConstants.USER;
 
     @Override

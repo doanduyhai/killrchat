@@ -1,52 +1,30 @@
 package com.datastax.demo.killrchat.service;
 
 import com.datastax.demo.killrchat.entity.ChatRoomEntity;
-import com.datastax.demo.killrchat.entity.MessageEntity;
-import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.exceptions.ChatRoomAlreadyExistsException;
 import com.datastax.demo.killrchat.exceptions.ChatRoomDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.IncorrectRoomException;
 import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
-import com.datastax.demo.killrchat.security.repository.CassandraRepository;
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.querybuilder.Delete;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
+import com.datastax.driver.core.*;
 import com.google.common.collect.Sets;
-import info.archinnov.achilles.exception.AchillesLightWeightTransactionException;
-import info.archinnov.achilles.persistence.Batch;
-import info.archinnov.achilles.persistence.PersistenceManager;
-import info.archinnov.achilles.type.OptionsBuilder;
+import info.archinnov.achilles.generated.manager.ChatRoomEntity_Manager;
+import info.archinnov.achilles.generated.manager.MessageEntity_Manager;
+import info.archinnov.achilles.generated.manager.UserEntity_Manager;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static com.datastax.demo.killrchat.entity.Schema.CHATROOMS;
-import static com.datastax.demo.killrchat.entity.Schema.CHATROOM_MESSAGES;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.driver.core.BatchStatement.Type.LOGGED;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static info.archinnov.achilles.type.OptionsBuilder.ifEqualCondition;
-import static info.archinnov.achilles.type.OptionsBuilder.ifExists;
-import static info.archinnov.achilles.type.OptionsBuilder.ifNotExists;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class ChatRoomService {
@@ -57,57 +35,54 @@ public class ChatRoomService {
 
     public static final String DELETION_MESSAGE = "The room '%s' has been removed by '%s'";
 
-    public final Function<UDTValue, LightUserModel> UDT_TO_LIGHT_USER_MODEL = new Function<UDTValue, LightUserModel>(){
+    private final ChatRoomEntity_Manager manager;
 
-        @Nullable
-        @Override
-        public LightUserModel apply(@Nullable UDTValue input) {
-            return repository.userUdtMapper.fromUDT(input);
-        }
-    };
+    private final UserEntity_Manager userManager;
 
-    private final Function<Row, ChatRoomModel> ROW_TO_CHAT_ROOM_MODEL = new Function<Row, ChatRoomModel>() {
-        @Override
-        public ChatRoomModel apply(Row row) {
-            final Set<LightUserModel> participants = FluentIterable.from(row.getSet("participants", UDTValue.class))
-                    .transform(UDT_TO_LIGHT_USER_MODEL)
-                    .toSet();
+    private final MessageEntity_Manager messagesManager;
 
-            return new ChatRoomEntity(row.getString("room_name"),
-                    repository.userUdtMapper.fromUDT(row.getUDTValue("creator")),
-                    row.getDate("creation_date"),
-                    row.getString("banner"),
-                    participants)
-                .toModel();
-        }
-    };
+    private final PreparedStatement updateParticipantIfExists;
 
     @Inject
-    Session session;
-
-    @Inject
-    CassandraRepository repository;
-
+    public ChatRoomService(ChatRoomEntity_Manager manager, UserEntity_Manager userManager, MessageEntity_Manager messagesManager) {
+        this.manager = manager;
+        this.userManager = userManager;
+        this.messagesManager = messagesManager;
+        updateParticipantIfExists = manager.getNativeSession().prepare("UPDATE " + KEYSPACE + "." + CHATROOMS
+                + " SET participants = participants + :participant WHERE room_name = :room_name IF EXISTS");
+    }
 
     public void createChatRoom(String roomName, String banner, LightUserModel creator) {
-        final UDTValue udtCreator = repository.userUdtMapper.toUDT(creator);
-        final Set<UDTValue> participantsList = Sets.newHashSet(udtCreator);
-        final String creatorLogin = creator.getLogin();
-        final BoundStatement bs = repository.createChatRoomPs.bind(roomName, udtCreator, creatorLogin, new Date(), banner, participantsList);
+        final ChatRoomEntity entity = new ChatRoomEntity(roomName, creator, new Date(), banner, Sets.newHashSet(creator));
+        manager
+                .crud()
+                .insert(entity)
+                .ifNotExists()
+                .withLwtResultListener(x -> {
+                    throw new ChatRoomAlreadyExistsException(format("The room '%s' already exists", roomName));
+                })
+                .execute();
 
-        final boolean applied = session.execute(bs).one().getBool("[applied]");
-        if (!applied) {
-            throw new ChatRoomAlreadyExistsException(format("The room '%s' already exists", roomName));
-        }
+        // Add this room name to user chat rooms set too
+        final BoundStatement updateUserRooms = userManager
+                .dsl()
+                .update()
+                .fromBaseTable()
+                .chatRooms_AddTo(roomName)
+                .where()
+                .login_Eq(creator.getLogin())
+                .generateAndGetBoundStatement();
 
         final BatchStatement batch = new BatchStatement(LOGGED);
-        batch.add(repository.addChatRoomToUserPs.bind(Sets.newHashSet(roomName),creatorLogin));
-        session.execute(batch);
-
+        batch.add(updateUserRooms);
+        userManager.getNativeSession().execute(batch);
     }
 
     public ChatRoomModel findRoomByName(String roomName) {
-        final ChatRoomEntity chatRoom = repository.chatRoomMapper.get(roomName);
+        final ChatRoomEntity chatRoom = manager
+                .crud()
+                .findById(roomName)
+                .get();
         if (chatRoom == null) {
             throw new ChatRoomDoesNotExistException(format("Chat room '%s' does not exists", roomName));
         }
@@ -116,65 +91,118 @@ public class ChatRoomService {
 
     public List<ChatRoomModel> listChatRooms(int fetchSize) {
 
-        final List<Row> foundChatRooms = session.execute(repository.listChatRoomPs.bind(fetchSize)).all();
-        return FluentIterable.from(foundChatRooms).transform(ROW_TO_CHAT_ROOM_MODEL).toList();
+        return manager
+                .dsl()
+                .select()
+                .allColumns_FromBaseTable()
+                .without_WHERE_Clause()
+                .limit(fetchSize)
+                .getList()
+                .stream()
+                .map(ChatRoomEntity::toModel)
+                .collect(toList());
     }
 
     public void addUserToRoom(String roomName, LightUserModel participant) {
-        final String newParticipant = participant.getLogin();
-        final UDTValue udtValue = repository.userUdtMapper.toUDT(participant);
-        final BoundStatement bs = repository.addParticipantToChatRoomPs.bind(Sets.newHashSet(udtValue), roomName);
 
-        final boolean applied = session.execute(bs).one().getBool("[applied]");
-
-        if(!applied)  {
+        final UDTValue udtValue = manager.meta.participants.encodeSingleElement(participant);
+        final BoundStatement boundStatement = updateParticipantIfExists.bind(Sets.newHashSet(udtValue), roomName);
+        final ResultSet resultSet = manager.getNativeSession().execute(boundStatement);
+        if (!resultSet.wasApplied()) {
             throw new ChatRoomDoesNotExistException(format("The chat room '%s' does not exist", roomName));
         }
 
-        // Add chat room to user chat room list too
+        // Add this room name to participant chat rooms set too
+        final BoundStatement updateUserRooms = userManager
+                .dsl()
+                .update()
+                .fromBaseTable()
+                .chatRooms_AddTo(roomName)
+                .where()
+                .login_Eq(participant.getLogin())
+                .generateAndGetBoundStatement();
+
         final BatchStatement batch = new BatchStatement(LOGGED);
-        batch.add(repository.addChatRoomToUserPs.bind(Sets.newHashSet(roomName), newParticipant));
-        session.execute(batch);
+        batch.add(updateUserRooms);
+        userManager.getNativeSession().execute(batch);
     }
 
     public void removeUserFromRoom(String roomName, LightUserModel participant) {
         final BatchStatement batch = new BatchStatement(LOGGED);
-        final UDTValue udtValue = repository.userUdtMapper.toUDT(participant);
-        final String participantToBeRemoved = participant.getLogin();
-        batch.add(repository.removeParticipantFromChatRoomPs.bind(Sets.newHashSet(udtValue), roomName));
 
-        // Remove chat room from user chat room list too
-        batch.add(repository.removeChatRoomFromUserPs.bind(Sets.newHashSet(roomName), participantToBeRemoved));
-        session.execute(batch);
+        final BoundStatement removeParticipant = manager
+                .dsl()
+                .update()
+                .fromBaseTable()
+                .participants_RemoveFrom(participant)
+                .where()
+                .roomName_Eq(roomName)
+                .generateAndGetBoundStatement();
+
+        // Remove this room name from participant chat rooms set too
+        final BoundStatement updateUserRooms = userManager
+                .dsl()
+                .update()
+                .fromBaseTable()
+                .chatRooms_RemoveFrom(roomName)
+                .where()
+                .login_Eq(participant.getLogin())
+                .generateAndGetBoundStatement();
+
+        batch.add(removeParticipant);
+        batch.add(updateUserRooms);
+        manager.getNativeSession().execute(batch);
     }
 
     public String deleteRoomWithParticipants(String creatorLogin, String roomName, Set<String> participants) {
 
-        final Row one = session.execute(repository.chatRoomMapper.getQuery(roomName)).one();
-        if (one == null) {
+        final ChatRoomEntity currentRoom = manager.crud().findById(roomName).get();
+        if (currentRoom == null) {
             throw new ChatRoomDoesNotExistException("Chat room '"+roomName+"' does not exists");
         }
 
-        final BoundStatement bs = repository.deleteChatRoomPs.bind(roomName, creatorLogin, one.getSet("participants",UDTValue.class));
-        final Row deleted = session.execute(bs).one();
-        final boolean applied = deleted.getBool("[applied]");
-        if (!applied) {
-            final String creator = deleted.getString("creator_login");
-            String message = creator.equals(creatorLogin) ? INCORRECT_PARTICIPANTS_FOR_DELETION:INCORRECT_CREATOR_FOR_DELETION;
-            throw new IncorrectRoomException(message);
-        }
+        final Set<LightUserModel> currentParticipants = currentRoom.getParticipants();
+
+        manager
+                .dsl()
+                .delete()
+                .allColumns_FromBaseTable()
+                .where()
+                .roomName_Eq(roomName)
+                .ifCreatorLogin_Eq(creatorLogin)
+                .ifParticipants_Eq(currentParticipants)
+                .withLwtResultListener(lwtResult -> {
+                    String creator = lwtResult.currentValues().getTyped("creator_login");
+                    String message = creator.equals(creatorLogin) ? INCORRECT_PARTICIPANTS_FOR_DELETION:INCORRECT_CREATOR_FOR_DELETION;
+                    throw new IncorrectRoomException(message);
+                })
+                .execute();
 
         // Delete all chat messages from room
         final BatchStatement batch = new BatchStatement(LOGGED);
-        batch.add(repository.deleteAllMessagePs.bind(roomName));
+        batch.add(messagesManager.crud().deleteByPartitionKeys(roomName).generateAndGetBoundStatement());
+        manager.getNativeSession().execute(batch);
 
-
-        // Remove this chat room from the chat room list of ALL current participants using BATCH for automatic retry
-        for (String participantLogin : participants) {
-            batch.add(repository.removeChatRoomFromUserPs.bind(Sets.newHashSet(roomName), participantLogin));
-        }
-
-        session.execute(batch);
+        // Remove room name from each participant room set too
+        // Create batches of 100 mutations maximum to avoid
+        // killing the coordinator
+        IntStream.range(0, (currentParticipants.size()/100) + 1)
+                .forEach(iteration -> {
+                    BatchStatement updateParticipantBatch = new BatchStatement(LOGGED);
+                    currentParticipants
+                            .stream()
+                            .skip(iteration * 100)
+                            .limit(100)
+                            .map(participant -> userManager
+                                    .dsl().update()
+                                    .fromBaseTable()
+                                    .chatRooms_RemoveFrom(roomName)
+                                    .where()
+                                    .login_Eq(participant.getLogin())
+                                    .generateAndGetBoundStatement())
+                            .forEach(updateParticipantBatch::add);
+                    manager.getNativeSession().execute(updateParticipantBatch);
+                });
 
         return String.format(DELETION_MESSAGE, roomName, creatorLogin);
     }

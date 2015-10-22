@@ -7,59 +7,56 @@ import static com.google.common.collect.FluentIterable.from;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.*;
 
+import com.datastax.demo.killrchat.entity.ChatRoomEntity;
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.exceptions.ChatRoomAlreadyExistsException;
 import com.datastax.demo.killrchat.exceptions.ChatRoomDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.IncorrectRoomException;
 import com.datastax.demo.killrchat.model.ChatRoomModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
-import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import info.archinnov.achilles.junit.AchillesResource;
-import info.archinnov.achilles.junit.AchillesResourceBuilder;
+import info.archinnov.achilles.generated.ManagerFactory;
+import info.archinnov.achilles.generated.ManagerFactoryBuilder;
+import info.archinnov.achilles.generated.meta.entity.ChatRoomEntity_AchillesMeta;
+import info.archinnov.achilles.junit.AchillesTestResource;
+import info.archinnov.achilles.junit.AchillesTestResourceBuilder;
 import info.archinnov.achilles.script.ScriptExecutor;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChatRoomServiceTest {
 
     @Rule
-    public AchillesResource resource = AchillesResourceBuilder
-            .noEntityPackages(KEYSPACE)
-            .withScript("cassandra/schema_creation.cql")
-            .tablesToTruncate(USERS, CHATROOMS)
-            .truncateBeforeAndAfterTest().build();
-    @Rule
-    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
+    public AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
+            .forJunit()
+            .withKeyspace(KEYSPACE)
+            .tablesToTruncate(UserEntity.class, ChatRoomEntity.class)
+            .truncateBeforeAndAfterTest()
+            .build(cluster -> ManagerFactoryBuilder
+                    .builder(cluster)
+                    .doForceSchemaCreation(true)
+                    .withDefaultKeyspaceName(KEYSPACE)
+                    .build());
 
     private Session session = resource.getNativeSession();
     private ScriptExecutor scriptExecutor = resource.getScriptExecutor();
-    private CassandraRepository repository = rule.getRepository();
-    private ChatRoomService service = new ChatRoomService();
+    private ManagerFactory factory = resource.getManagerFactory();
+    private ChatRoomService service = new ChatRoomService(factory.forChatRoomEntity(), factory.forUserEntity(), factory.forMessageEntity());
 
     private LightUserModel john = new LightUserModel("jdoe", "John", "DOE");
     private LightUserModel helen = new LightUserModel("hsue", "Helen", "SUE");
-
-    @Before
-    public void setUp() throws IOException {
-        service.session = session;
-        service.repository = repository;
-    }
 
     @Test
     public void should_create_chat_room() throws Exception {
@@ -70,14 +67,18 @@ public class ChatRoomServiceTest {
         service.createChatRoom(roomName, "banner", john);
 
         //Then
-        final Row chatRoom = session.execute(select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "random_thoughts"))).one();
-        final Row jdoeChatRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+        final Row chatRoom = session.execute(builder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "random_thoughts"))).one();
+        final Row jdoeChatRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
 
         assertThat(chatRoom).isNotNull();
         assertThat(chatRoom.getString("room_name")).isEqualTo(roomName);
         assertThat(chatRoom.getString("banner")).isEqualTo("banner");
-        final Set<LightUserModel> participants = from(chatRoom.getSet("participants", UDTValue.class))
-                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+        final Set<LightUserModel> participants = chatRoom.getSet("participants", UDTValue.class)
+                .stream()
+                .map(udt -> ChatRoomEntity_AchillesMeta.participants.decodeSingleElement(udt))
+                .collect(Collectors.toSet());
+
         assertThat(participants).contains(john);
 
         assertThat(jdoeChatRooms.getSet("chat_rooms", String.class)).hasSize(1).containsExactly(roomName);
@@ -136,14 +137,18 @@ public class ChatRoomServiceTest {
         service.addUserToRoom("politics", helen);
 
         //Then
-        final Select.Where participants = select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
-        final Select.Where helenChatRooms = select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        final Select.Where participants = builder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
 
         final Row participantsRow = session.execute(participants).one();
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
 
-        final Set<LightUserModel> participantModels = from(participantsRow.getSet("participants", UDTValue.class))
-                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+        final Set<LightUserModel> participantModels = participantsRow.getSet("participants", UDTValue.class)
+                .stream()
+                .map(udt -> ChatRoomEntity_AchillesMeta.participants.decodeSingleElement(udt))
+                .collect(Collectors.toSet());
 
         assertThat(participantModels).containsOnly(john, helen);
         assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(1).containsExactly("politics");
@@ -163,15 +168,20 @@ public class ChatRoomServiceTest {
         service.removeUserFromRoom("politics", helen);
 
         //Then
-        final Select.Where participants = select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
-        final Select.Where helenChatRooms = select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        final Select.Where participants = builder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
 
         final Row participantsRow = session.execute(participants).one();
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
 
         assertThat(participantsRow).isNotNull();
-        final Set<LightUserModel> participantModels = from(participantsRow.getSet("participants", UDTValue.class))
-                .transform(service.UDT_TO_LIGHT_USER_MODEL).toSet();
+        final Set<LightUserModel> participantModels = participantsRow.getSet("participants", UDTValue.class)
+                .stream()
+                .map(udt -> ChatRoomEntity_AchillesMeta.participants.decodeSingleElement(udt))
+                .collect(Collectors.toSet());
+
         assertThat(participantModels).containsOnly(john);
 
         assertThat(helenChatRoomsRow.getSet("chat_rooms",String.class)).hasSize(0);
@@ -188,24 +198,25 @@ public class ChatRoomServiceTest {
         //Then
         assertThat(message).isEqualTo(format(DELETION_MESSAGE, "fairy", "jdoe"));
 
-        final Row room = session.execute(select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+
+        final Row room = session.execute(builder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
         assertThat(room).isNull();
 
-        final List<Row> messages = session.execute(select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
+        final List<Row> messages = session.execute(builder.select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
 
         assertThat(messages).isEmpty();
 
-        final Row jdoeRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
-        final Row hsueRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
-        final Row aliceRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
-        final Row bobRooms = session.execute(select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "bob"))).one();
+        final Row jdoeRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
+        final Row hsueRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
+        final Row aliceRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
+        final Row bobRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "bob"))).one();
 
         assertThat(jdoeRooms.isNull("chat_rooms")).isTrue();
         assertThat(hsueRooms.isNull("chat_rooms")).isTrue();
         assertThat(aliceRooms.isNull("chat_rooms")).isTrue();
         assertThat(bobRooms.isNull("chat_rooms")).isTrue();
-
-
     }
 
     @Test(expected = IncorrectRoomException.class)

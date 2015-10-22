@@ -3,11 +3,8 @@ package com.datastax.demo.killrchat.entity;
 import com.datastax.demo.killrchat.model.MessageModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+
+import info.archinnov.achilles.annotations.*;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
@@ -18,15 +15,15 @@ import static com.datastax.demo.killrchat.entity.Schema.CHATROOM_MESSAGES;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 
 
-@Table(keyspace = KEYSPACE, name = CHATROOM_MESSAGES)
+@Entity(keyspace = KEYSPACE, table = CHATROOM_MESSAGES)
 public class MessageEntity {
 
     @PartitionKey
-    @Column(name = "room_name")
+    @Column("room_name")
     private String roomName;
 
-    @ClusteringColumn
-    @Column(name = "message_id")
+    @ClusteringColumn(value = 1, asc = false)
+    @Column("message_id")
     private UUID messageId;
 
     @NotNull
@@ -38,7 +35,7 @@ public class MessageEntity {
     @Column
     private String content;
 
-    @Column(name = "system_message")
+    @Column("system_message")
     private boolean systemMessage;
 
 

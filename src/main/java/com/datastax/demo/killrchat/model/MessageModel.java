@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.NotBlank;
 
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -75,5 +76,22 @@ public class MessageModel {
 
     public void setSystemMessage(boolean systemMessage) {
         this.systemMessage = systemMessage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MessageModel that = (MessageModel) o;
+        return Objects.equals(systemMessage, that.systemMessage) &&
+                Objects.equals(messageId, that.messageId) &&
+                Objects.equals(creationDate, that.creationDate) &&
+                Objects.equals(author, that.author) &&
+                Objects.equals(content, that.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(messageId, creationDate, author, content, systemMessage);
     }
 }

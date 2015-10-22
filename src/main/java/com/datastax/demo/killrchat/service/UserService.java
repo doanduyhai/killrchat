@@ -1,20 +1,17 @@
 package com.datastax.demo.killrchat.service;
 
-
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.Validator;
 
 import com.datastax.demo.killrchat.entity.UserEntity;
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
 import com.datastax.demo.killrchat.exceptions.UserAlreadyExistsException;
 import com.datastax.demo.killrchat.exceptions.UserNotFoundException;
 import com.datastax.demo.killrchat.model.UserModel;
-import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import com.datastax.demo.killrchat.security.utils.SecurityUtils;
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+
+import info.archinnov.achilles.generated.manager.UserEntity_Manager;
+
 import org.springframework.stereotype.Service;
 
 import static java.lang.String.format;
@@ -22,27 +19,31 @@ import static java.lang.String.format;
 @Service
 public class UserService {
 
-    @Inject
-    Session session;
+
+    private final UserEntity_Manager manager;
 
     @Inject
-    CassandraRepository repository;
-
+    public UserService(UserEntity_Manager manager) {
+        this.manager = manager;
+    }
 
     public void createUser(@Valid UserModel model) {
-        final BoundStatement bs = repository.createUserPs.bind(model.getLogin(), model.getPassword(), model.getFirstname(), model.getLastname(), model.getEmail(), model.getBio());
-        final Row lwtResult = session.execute(bs).one();
-        if (!lwtResult.getBool("[applied]")) {
-            throw new UserAlreadyExistsException(format("The user with the login '%s' already exists", model.getLogin()));
-        }
+        final UserEntity entity = UserEntity.fromModel(model);
+        manager.crud()
+                .insert(entity)
+                .ifNotExists()
+                .withLwtResultListener(lwtResult -> {
+                    throw new UserAlreadyExistsException(format("The user with the login '%s' already exists", model.getLogin()));
+                })
+                .execute();
     }
 
     public UserEntity findByLogin(String login) {
-        final UserEntity userEntity = repository.userMapper.get(login);
-        if (userEntity == null) {
+        final UserEntity entity = manager.crud().findById(login).get();
+        if (entity == null) {
             throw new UserNotFoundException(format("Cannot find user with login '%s'", login));
         }
-        return userEntity;
+        return entity;
     }
 
     public UserModel fetchRememberMeUser() {

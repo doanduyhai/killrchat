@@ -9,31 +9,30 @@ import static com.datastax.demo.killrchat.service.MessageService.LEAVING_MESSAGE
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static info.archinnov.achilles.generated.meta.entity.MessageEntity_AchillesMeta.author;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.demo.killrchat.entity.UserEntity;
+import com.datastax.demo.killrchat.entity.MessageEntity;
 import com.datastax.demo.killrchat.model.MessageModel;
 import com.datastax.demo.killrchat.model.LightUserModel;
-import com.datastax.demo.killrchat.security.repository.CassandraRepository;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
-import info.archinnov.achilles.junit.AchillesResource;
-import info.archinnov.achilles.junit.AchillesResourceBuilder;
-import info.archinnov.achilles.persistence.PersistenceManager;
-import org.junit.Before;
+import info.archinnov.achilles.generated.ManagerFactory;
+import info.archinnov.achilles.generated.ManagerFactoryBuilder;
+import info.archinnov.achilles.junit.AchillesTestResource;
+import info.archinnov.achilles.junit.AchillesTestResourceBuilder;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,26 +40,22 @@ import java.util.UUID;
 public class MessageServiceTest {
 
     @Rule
-    public AchillesResource resource = AchillesResourceBuilder
-            .noEntityPackages(KEYSPACE)
-            .withScript("cassandra/schema_creation.cql")
-            .tablesToTruncate(CHATROOM_MESSAGES)
-            .truncateBeforeAndAfterTest().build();
-    @Rule
-    public CassandraRepositoryRule rule = new CassandraRepositoryRule(resource);
+    public AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
+            .forJunit()
+            .withKeyspace(KEYSPACE)
+            .tablesToTruncate(MessageEntity.class)
+            .truncateBeforeAndAfterTest()
+            .build(cluster -> ManagerFactoryBuilder
+                    .builder(cluster)
+                    .doForceSchemaCreation(true)
+                    .withDefaultKeyspaceName(KEYSPACE)
+                    .build());
 
     private Session session = resource.getNativeSession();
-    private CassandraRepository repository = rule.getRepository();
-    private MessageService service = new MessageService();
+    private MessageService service = new MessageService(resource.getManagerFactory().forMessageEntity());
 
     private LightUserModel johnDoe = new LightUserModel("jdoe","John","DOE");
     private LightUserModel helenSue = new LightUserModel("hsue","Helen","SUE");
-
-    @Before
-    public void setUp() throws IOException {
-        service.session = session;
-        service.repository = repository;
-    }
 
     @Test
     public void should_create_new_chat_message() throws Exception {
@@ -72,15 +67,20 @@ public class MessageServiceTest {
         //When
         service.postNewMessage(johnDoe, roomName, messageContent);
 
+        // Wait for insert async
+        Thread.sleep(100);
+
         //Then
-        final Select selectMessages = select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName))
                 .limit(1);
 
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author"))).isEqualTo(johnDoe);
+        assertThat(author.decodeFromGettable(lastMessage)).isEqualTo(johnDoe);
         assertThat(lastMessage.getString("content")).isEqualTo(messageContent);
         assertThat(lastMessage.getBool("system_message")).isFalse();
     }
@@ -101,7 +101,9 @@ public class MessageServiceTest {
         final UUID messageId4 = UUIDs.timeBased();
         final UUID messageId5 = UUIDs.timeBased();
 
-        Insert createMessage = insertInto(KEYSPACE, CHATROOM_MESSAGES)
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        Insert createMessage = builder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
                 .value("room_name", bindMarker("room_name"))
                 .value("message_id", bindMarker("message_id"))
                 .value("author", bindMarker("author"))
@@ -110,11 +112,12 @@ public class MessageServiceTest {
 
         final PreparedStatement preparedStatement = session.prepare(createMessage);
 
-        session.execute(preparedStatement.bind(roomName, messageId1, repository.userUdtMapper.toUDT(johnDoe), message1, false));
-        session.execute(preparedStatement.bind(roomName, messageId2, repository.userUdtMapper.toUDT(helenSue), message2, false));
-        session.execute(preparedStatement.bind(roomName, messageId3, repository.userUdtMapper.toUDT(johnDoe), message3, false));
-        session.execute(preparedStatement.bind(roomName, messageId4, repository.userUdtMapper.toUDT(helenSue), message4, false));
-        session.execute(preparedStatement.bind(roomName, messageId5, repository.userUdtMapper.toUDT(johnDoe), message5, false));
+
+        session.execute(preparedStatement.bind(roomName, messageId1, author.encodeFromJava(johnDoe), message1, false));
+        session.execute(preparedStatement.bind(roomName, messageId2, author.encodeFromJava(helenSue), message2, false));
+        session.execute(preparedStatement.bind(roomName, messageId3, author.encodeFromJava(johnDoe), message3, false));
+        session.execute(preparedStatement.bind(roomName, messageId4, author.encodeFromJava(helenSue), message4, false));
+        session.execute(preparedStatement.bind(roomName, messageId5, author.encodeFromJava(johnDoe), message5, false));
 
         //When
         final List<MessageModel> messages = service.fetchNextMessagesForRoom(roomName, UUIDs.timeBased(), 2);
@@ -144,12 +147,18 @@ public class MessageServiceTest {
         String message4 = "What's about Diablo 3 ?";
         String message5 = "You're right, completely forgot it!";
         final UUID messageId1 = UUIDs.timeBased();
+        Thread.sleep(1);
         final UUID messageId2 = UUIDs.timeBased();
+        Thread.sleep(1);
         final UUID messageId3 = UUIDs.timeBased();
+        Thread.sleep(1);
         final UUID messageId4 = UUIDs.timeBased();
+        Thread.sleep(1);
         final UUID messageId5 = UUIDs.timeBased();
 
-        Insert createMessage = insertInto(KEYSPACE, CHATROOM_MESSAGES)
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        Insert createMessage = builder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
                 .value("room_name", bindMarker("room_name"))
                 .value("message_id", bindMarker("message_id"))
                 .value("author", bindMarker("author"))
@@ -158,11 +167,11 @@ public class MessageServiceTest {
 
         final PreparedStatement preparedStatement = session.prepare(createMessage);
 
-        session.execute(preparedStatement.bind(roomName, messageId1, repository.userUdtMapper.toUDT(johnDoe), message1, false));
-        session.execute(preparedStatement.bind(roomName, messageId2, repository.userUdtMapper.toUDT(helenSue), message2, false));
-        session.execute(preparedStatement.bind(roomName, messageId3, repository.userUdtMapper.toUDT(johnDoe), message3, false));
-        session.execute(preparedStatement.bind(roomName, messageId4, repository.userUdtMapper.toUDT(helenSue), message4, false));
-        session.execute(preparedStatement.bind(roomName, messageId5, repository.userUdtMapper.toUDT(johnDoe), message5, false));
+        session.execute(preparedStatement.bind(roomName, messageId1, author.encodeFromJava(johnDoe), message1, false));
+        session.execute(preparedStatement.bind(roomName, messageId2, author.encodeFromJava(helenSue), message2, false));
+        session.execute(preparedStatement.bind(roomName, messageId3, author.encodeFromJava(johnDoe), message3, false));
+        session.execute(preparedStatement.bind(roomName, messageId4, author.encodeFromJava(helenSue), message4, false));
+        session.execute(preparedStatement.bind(roomName, messageId5, author.encodeFromJava(johnDoe), message5, false));
 
         //When
         final List<MessageModel> messages = service.fetchNextMessagesForRoom(roomName, messageId4, 2);
@@ -190,14 +199,19 @@ public class MessageServiceTest {
         //When
         service.createJoiningMessage(roomName, johnDoe);
 
+        // Wait for insert async
+        Thread.sleep(100);
+
         //Then
-        final Select selectMessages = select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName)).limit(1);
 
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author")).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
+        assertThat(author.decodeFromGettable(lastMessage).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
         assertThat(lastMessage.getString("content")).isEqualTo(format(JOINING_MESSAGE, "John DOE"));
         assertThat(lastMessage.getBool("system_message")).isTrue();
     }
@@ -210,14 +224,19 @@ public class MessageServiceTest {
         //When
         service.createLeavingMessage(roomName, johnDoe);
 
+        // Wait for insert async
+        Thread.sleep(100);
+
         //Then
-        final Select selectMessages = select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final QueryBuilder builder = new QueryBuilder(session.getCluster());
+
+        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName)).limit(1);
 
         final Row lastMessage = session.execute(selectMessages).one();
 
         assertThat(lastMessage.getUUID("message_id")).isNotNull();
-        assertThat(repository.userUdtMapper.fromUDT(lastMessage.getUDTValue("author")).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
+        assertThat(author.decodeFromGettable(lastMessage).getLogin()).isEqualTo(KILLRCHAT_LOGIN);
         assertThat(lastMessage.getString("content")).isEqualTo(format(LEAVING_MESSAGE, "John DOE"));
         assertThat(lastMessage.getBool("system_message")).isTrue();
     }

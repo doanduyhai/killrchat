@@ -4,6 +4,8 @@ import com.datastax.demo.killrchat.entity.Schema;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import info.archinnov.achilles.embedded.CassandraEmbeddedServerBuilder;
+import info.archinnov.achilles.generated.ManagerFactory;
+import info.archinnov.achilles.generated.ManagerFactoryBuilder;
 import info.archinnov.achilles.script.ScriptExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,31 +27,33 @@ public class CassandraConfiguration {
     private Environment env;
 
     @Profile(Profiles.SPRING_PROFILE_DEVELOPMENT)
-    @Bean(destroyMethod = "close")
-    public Session cassandraNativeClusterDev() {
+    @Bean(destroyMethod = "shutDown")
+    public ManagerFactory cassandraNativeClusterDev() {
         final Cluster cluster = CassandraEmbeddedServerBuilder
-                .noEntityPackages()
+                .builder()
                 .cleanDataFilesAtStartup(false)
                 .withDataFolder(env.getProperty("dev.cassandra.folders.data"))
                 .withCommitLogFolder(env.getProperty("dev.cassandra.folders.commitlog"))
                 .withSavedCachesFolder(env.getProperty("dev.cassandra.folders.saved_caches"))
                 .withDurableWrite(true)
                 .withClusterName(CLUSTER_NAME)
-                .buildNativeClusterOnly();
-
-        logger.info("Create keyspace "+Schema.KEYSPACE+" if necessary ");
-        String keyspaceCreation = "CREATE KEYSPACE IF NOT EXISTS "+Schema.KEYSPACE+" WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}";
-
+                .buildNativeCluster();
         final Session session = cluster.connect();
-        maybeCreateSchema(session);
-        session.execute(keyspaceCreation);
 
-        return session;
+        maybeCreateSchema(session);
+        return ManagerFactoryBuilder
+                .builder(cluster)
+                .withDefaultKeyspaceName(Schema.KEYSPACE)
+                .doForceSchemaCreation(true)
+                .withBeanValidation(true)
+                .withPostLoadBeanValidation(true)
+                .build();
+
     }
 
     @Profile(Profiles.SPRING_PROFILE_PRODUCTION)
-    @Bean(destroyMethod = "close")
-    public Session cassandraNativeClusterProduction() {
+    @Bean(destroyMethod = "shutDown")
+    public ManagerFactory cassandraNativeClusterProduction() {
 
         Cluster cluster = Cluster.builder()
                 .addContactPoints(env.getProperty("cassandra.host"))
@@ -57,11 +61,13 @@ public class CassandraConfiguration {
                 .withClusterName(CLUSTER_NAME)
                 .build();
 
+        final ManagerFactory factory = ManagerFactoryBuilder
+                .builder(cluster)
+                .build();
         final Session session = cluster.connect();
 
         maybeCreateSchema(session);
-
-        return session;
+        return factory;
     }
 
     private void maybeCreateSchema(Session session) {
