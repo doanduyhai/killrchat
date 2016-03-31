@@ -167,6 +167,17 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+	<dependencies>
+		<!-- solves https://datastax-oss.atlassian.net/browse/JAVA-1018 -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>4.0.27.Final</version>
+		</dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
