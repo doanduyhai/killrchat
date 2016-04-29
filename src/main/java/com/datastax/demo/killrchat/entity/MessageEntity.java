@@ -15,7 +15,7 @@ import static com.datastax.demo.killrchat.entity.Schema.CHATROOM_MESSAGES;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 
 
-@Entity(keyspace = KEYSPACE, table = CHATROOM_MESSAGES)
+@Table(keyspace = KEYSPACE, table = CHATROOM_MESSAGES)
 public class MessageEntity {
 
     @PartitionKey

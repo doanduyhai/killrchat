@@ -42,11 +42,12 @@ public class MessageServiceTest {
     @Rule
     public AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
             .forJunit()
-            .withKeyspace(KEYSPACE)
-            .tablesToTruncate(MessageEntity.class)
+            .createAndUseKeyspace(KEYSPACE)
+            .entityClassesToTruncate(MessageEntity.class)
             .truncateBeforeAndAfterTest()
-            .build(cluster -> ManagerFactoryBuilder
+            .build((cluster, statementsCache) -> ManagerFactoryBuilder
                     .builder(cluster)
+                    .withStatementsCache(statementsCache)
                     .doForceSchemaCreation(true)
                     .withDefaultKeyspaceName(KEYSPACE)
                     .build());
@@ -71,9 +72,7 @@ public class MessageServiceTest {
         Thread.sleep(100);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final Select selectMessages = QueryBuilder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName))
                 .limit(1);
 
@@ -101,9 +100,7 @@ public class MessageServiceTest {
         final UUID messageId4 = UUIDs.timeBased();
         final UUID messageId5 = UUIDs.timeBased();
 
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        Insert createMessage = builder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
+        Insert createMessage = QueryBuilder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
                 .value("room_name", bindMarker("room_name"))
                 .value("message_id", bindMarker("message_id"))
                 .value("author", bindMarker("author"))
@@ -156,9 +153,7 @@ public class MessageServiceTest {
         Thread.sleep(1);
         final UUID messageId5 = UUIDs.timeBased();
 
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        Insert createMessage = builder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
+        Insert createMessage = QueryBuilder.insertInto(KEYSPACE, CHATROOM_MESSAGES)
                 .value("room_name", bindMarker("room_name"))
                 .value("message_id", bindMarker("message_id"))
                 .value("author", bindMarker("author"))
@@ -203,9 +198,7 @@ public class MessageServiceTest {
         Thread.sleep(100);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final Select selectMessages = QueryBuilder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName)).limit(1);
 
         final Row lastMessage = session.execute(selectMessages).one();
@@ -228,9 +221,7 @@ public class MessageServiceTest {
         Thread.sleep(100);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        final Select selectMessages = builder.select().from(KEYSPACE, CHATROOM_MESSAGES)
+        final Select selectMessages = QueryBuilder.select().from(KEYSPACE, CHATROOM_MESSAGES)
                 .where(eq("room_name", roomName)).limit(1);
 
         final Row lastMessage = session.execute(selectMessages).one();

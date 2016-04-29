@@ -18,7 +18,7 @@ import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.PERSISTENT_TOKEN;
 
 
-@Entity(keyspace = KEYSPACE, table = PERSISTENT_TOKEN)
+@Table(keyspace = KEYSPACE, table = PERSISTENT_TOKEN)
 @TTL(value = PersistentTokenEntity.TOKEN_VALIDITY_SECONDS)
 public class PersistentTokenEntity implements Serializable {
 

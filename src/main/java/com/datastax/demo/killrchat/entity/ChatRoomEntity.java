@@ -13,7 +13,7 @@ import java.util.Set;
 import static com.datastax.demo.killrchat.entity.Schema.CHATROOMS;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 
-@Entity(keyspace = KEYSPACE, table = CHATROOMS)
+@Table(keyspace = KEYSPACE, table = CHATROOMS)
 public class ChatRoomEntity {
 
     @PartitionKey

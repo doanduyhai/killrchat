@@ -7,8 +7,8 @@ import com.google.common.collect.Sets;
 
 import info.archinnov.achilles.annotations.Column;
 import info.archinnov.achilles.annotations.EmptyCollectionIfNull;
-import info.archinnov.achilles.annotations.Entity;
 import info.archinnov.achilles.annotations.PartitionKey;
+import info.archinnov.achilles.annotations.Table;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import java.util.Set;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.USERS;
 
-@Entity(keyspace = KEYSPACE, table = USERS)
+@Table(keyspace = KEYSPACE, table = USERS)
 public class UserEntity {
 
     @PartitionKey

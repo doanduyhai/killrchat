@@ -41,11 +41,12 @@ public class ChatRoomServiceTest {
     @Rule
     public AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
             .forJunit()
-            .withKeyspace(KEYSPACE)
-            .tablesToTruncate(UserEntity.class, ChatRoomEntity.class)
+            .createAndUseKeyspace(KEYSPACE)
+            .entityClassesToTruncate(UserEntity.class, ChatRoomEntity.class)
             .truncateBeforeAndAfterTest()
-            .build(cluster -> ManagerFactoryBuilder
+            .build((cluster, statementsCache) -> ManagerFactoryBuilder
                     .builder(cluster)
+                    .withStatementsCache(statementsCache)
                     .doForceSchemaCreation(true)
                     .withDefaultKeyspaceName(KEYSPACE)
                     .build());
@@ -67,9 +68,8 @@ public class ChatRoomServiceTest {
         service.createChatRoom(roomName, "banner", john);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-        final Row chatRoom = session.execute(builder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "random_thoughts"))).one();
-        final Row jdoeChatRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
+        final Row chatRoom = session.execute(QueryBuilder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "random_thoughts"))).one();
+        final Row jdoeChatRooms = session.execute(QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
 
         assertThat(chatRoom).isNotNull();
         assertThat(chatRoom.getString("room_name")).isEqualTo(roomName);
@@ -137,10 +137,8 @@ public class ChatRoomServiceTest {
         service.addUserToRoom("politics", helen);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        final Select.Where participants = builder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
-        final Select.Where helenChatRooms = builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+        final Select.Where participants = QueryBuilder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
 
         final Row participantsRow = session.execute(participants).one();
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
@@ -168,10 +166,8 @@ public class ChatRoomServiceTest {
         service.removeUserFromRoom("politics", helen);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-        final Select.Where participants = builder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
-        final Select.Where helenChatRooms = builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
+        final Select.Where participants = QueryBuilder.select("participants").from(KEYSPACE, CHATROOMS).where(eq("room_name", "politics"));
+        final Select.Where helenChatRooms = QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"));
 
         final Row participantsRow = session.execute(participants).one();
         final Row helenChatRoomsRow = session.execute(helenChatRooms).one();
@@ -198,20 +194,17 @@ public class ChatRoomServiceTest {
         //Then
         assertThat(message).isEqualTo(format(DELETION_MESSAGE, "fairy", "jdoe"));
 
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-
-
-        final Row room = session.execute(builder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
+        final Row room = session.execute(QueryBuilder.select().from(KEYSPACE, CHATROOMS).where(eq("room_name", "fairy"))).one();
         assertThat(room).isNull();
 
-        final List<Row> messages = session.execute(builder.select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
+        final List<Row> messages = session.execute(QueryBuilder.select().from(KEYSPACE, CHATROOM_MESSAGES).where(eq("room_name", "fairy")).limit(10)).all();
 
         assertThat(messages).isEmpty();
 
-        final Row jdoeRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
-        final Row hsueRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
-        final Row aliceRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
-        final Row bobRooms = session.execute(builder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "bob"))).one();
+        final Row jdoeRooms = session.execute(QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "jdoe"))).one();
+        final Row hsueRooms = session.execute(QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "hsue"))).one();
+        final Row aliceRooms = session.execute(QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "alice"))).one();
+        final Row bobRooms = session.execute(QueryBuilder.select("chat_rooms").from(KEYSPACE, USERS).where(eq("login", "bob"))).one();
 
         assertThat(jdoeRooms.isNull("chat_rooms")).isTrue();
         assertThat(hsueRooms.isNull("chat_rooms")).isTrue();

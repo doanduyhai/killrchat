@@ -3,7 +3,6 @@ package com.datastax.demo.killrchat.service;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.demo.killrchat.entity.Schema.KEYSPACE;
 import static com.datastax.demo.killrchat.entity.Schema.USERS;
-import static info.archinnov.achilles.embedded.CassandraEmbeddedConfigParameters.DEFAULT_KEYSPACE_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.demo.killrchat.exceptions.RememberMeDoesNotExistException;
@@ -16,8 +15,6 @@ import info.archinnov.achilles.junit.AchillesTestResource;
 import info.archinnov.achilles.junit.AchillesTestResourceBuilder;
 import info.archinnov.achilles.script.ScriptExecutor;
 
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,12 +35,12 @@ public class UserServiceTest {
     @Rule
     public  AchillesTestResource<ManagerFactory> resource = AchillesTestResourceBuilder
             .forJunit()
-            .withKeyspace(KEYSPACE)
-//            .withScript("cassandra/schema_creation.cql")
-            .tablesToTruncate(UserEntity.class)
+            .createAndUseKeyspace(KEYSPACE)
+            .entityClassesToTruncate(UserEntity.class)
             .truncateBeforeAndAfterTest()
-            .build(cluster -> ManagerFactoryBuilder
+            .build((cluster, statementsCache) -> ManagerFactoryBuilder
                     .builder(cluster)
+                    .withStatementsCache(statementsCache)
                     .doForceSchemaCreation(true)
                     .withDefaultKeyspaceName(KEYSPACE)
                     .build());
@@ -62,8 +59,7 @@ public class UserServiceTest {
         service.createUser(model);
 
         //Then
-        final QueryBuilder builder = new QueryBuilder(session.getCluster());
-        final Row row = session.execute(builder.select().from(USERS).where(eq("login", "emc2"))).one();
+        final Row row = session.execute(QueryBuilder.select().from(USERS).where(eq("login", "emc2"))).one();
 
         assertThat(row).isNotNull();
         assertThat(row.getString("login")).isEqualTo("emc2");
