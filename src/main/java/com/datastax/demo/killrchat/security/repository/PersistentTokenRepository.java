@@ -43,9 +43,9 @@ public class PersistentTokenRepository {
                 .dsl()
                 .update()
                 .fromBaseTable()
-                .tokenValue_Set(token.getTokenValue())
+                .tokenValue().Set(token.getTokenValue())
                 .where()
-                .series_Eq(token.getSeries())
+                .series().Eq(token.getSeries())
                 .usingTimeToLive(PersistentTokenEntity.TOKEN_VALIDITY_SECONDS)
                 .execute();
     }

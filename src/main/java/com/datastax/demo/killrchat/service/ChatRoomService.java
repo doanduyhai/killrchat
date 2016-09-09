@@ -68,9 +68,9 @@ public class ChatRoomService {
                 .dsl()
                 .update()
                 .fromBaseTable()
-                .chatRooms_AddTo(roomName)
+                .chatRooms().AddTo(roomName)
                 .where()
-                .login_Eq(creator.getLogin())
+                .login().Eq(creator.getLogin())
                 .generateAndGetBoundStatement();
 
         final BatchStatement batch = new BatchStatement(LOGGED);
@@ -117,9 +117,9 @@ public class ChatRoomService {
                 .dsl()
                 .update()
                 .fromBaseTable()
-                .chatRooms_AddTo(roomName)
+                .chatRooms().AddTo(roomName)
                 .where()
-                .login_Eq(participant.getLogin())
+                .login().Eq(participant.getLogin())
                 .generateAndGetBoundStatement();
 
         final BatchStatement batch = new BatchStatement(LOGGED);
@@ -134,9 +134,9 @@ public class ChatRoomService {
                 .dsl()
                 .update()
                 .fromBaseTable()
-                .participants_RemoveFrom(participant)
+                .participants().RemoveFrom(participant)
                 .where()
-                .roomName_Eq(roomName)
+                .roomName().Eq(roomName)
                 .generateAndGetBoundStatement();
 
         // Remove this room name from participant chat rooms set too
@@ -144,9 +144,9 @@ public class ChatRoomService {
                 .dsl()
                 .update()
                 .fromBaseTable()
-                .chatRooms_RemoveFrom(roomName)
+                .chatRooms().RemoveFrom(roomName)
                 .where()
-                .login_Eq(participant.getLogin())
+                .login().Eq(participant.getLogin())
                 .generateAndGetBoundStatement();
 
         batch.add(removeParticipant);
@@ -168,9 +168,9 @@ public class ChatRoomService {
                 .delete()
                 .allColumns_FromBaseTable()
                 .where()
-                .roomName_Eq(roomName)
-                .ifCreatorLogin_Eq(creatorLogin)
-                .ifParticipants_Eq(currentParticipants)
+                .roomName().Eq(roomName)
+                .if_CreatorLogin().Eq(creatorLogin)
+                .if_Participants().Eq(currentParticipants)
                 .withLwtResultListener(lwtResult -> {
                     String creator = lwtResult.currentValues().getTyped("creator_login");
                     String message = creator.equals(creatorLogin) ? INCORRECT_PARTICIPANTS_FOR_DELETION:INCORRECT_CREATOR_FOR_DELETION;
@@ -196,9 +196,9 @@ public class ChatRoomService {
                             .map(participant -> userManager
                                     .dsl().update()
                                     .fromBaseTable()
-                                    .chatRooms_RemoveFrom(roomName)
+                                    .chatRooms().RemoveFrom(roomName)
                                     .where()
-                                    .login_Eq(participant.getLogin())
+                                    .login().Eq(participant.getLogin())
                                     .generateAndGetBoundStatement())
                             .forEach(updateParticipantBatch::add);
                     manager.getNativeSession().execute(updateParticipantBatch);
