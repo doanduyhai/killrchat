@@ -17,6 +17,7 @@ import javax.inject.Inject;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -105,7 +106,7 @@ public class ChatRoomService {
 
     public void addUserToRoom(String roomName, LightUserModel participant) {
 
-        final UDTValue udtValue = manager.meta.participants.encodeSingleElement(participant);
+        final UDTValue udtValue = manager.meta.participants.encodeSingleElement(participant, Optional.empty());
         final BoundStatement boundStatement = updateParticipantIfExists.bind(Sets.newHashSet(udtValue), roomName);
         final ResultSet resultSet = manager.getNativeSession().execute(boundStatement);
         if (!resultSet.wasApplied()) {
